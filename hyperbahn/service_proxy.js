@@ -27,7 +27,6 @@ var clean = require('../lib/statsd-clean').clean;
 var util = require('util');
 var RateLimiter = require('../rate_limiter');
 var Circuits = require('../circuits');
-var ServiceHealthProxy = require('./service_health_proxy');
 
 var DEFAULT_LOG_GRACE_PERIOD = 5 * 60 * 1000;
 var SERVICE_PURGE_PERIOD = 5 * 60 * 1000;
@@ -249,17 +248,9 @@ function createServiceChannel(serviceName) {
         }
     }
 
-    var handler = new RelayHandler(svcchan);
-
-    // Decorate a circuit health monitor to egress request handlers.
-    if (mode === 'exit' && self.circuits) {
-        handler = new ServiceHealthProxy({
-            nextHandler: handler,
-            circuits: self.circuits
-        });
-    }
-
-    svcchan.handler = handler;
+    svcchan.handler = new RelayHandler(
+        svcchan,
+        mode === 'exit' && self.circuits);
 
     return svcchan;
 };
@@ -305,12 +296,32 @@ function refreshServicePeer(serviceName, hostPort) {
 ServiceDispatchHandler.prototype.removeServicePeer =
 function removeServicePeer(serviceName, hostPort) {
     var self = this;
+
     var svcchan = self.channel.subChannels[serviceName];
-    var peer = svcchan.peers.get(hostPort);
-    if (peer) {
-        peer.close(noop);
+    if (!svcchan) {
+        return;
     }
-    self.channel.peers.delete(hostPort);
+
+    var peer = self.channel.peers.get(hostPort);
+    if (!peer) {
+        return;
+    }
+    svcchan.peers.delete(hostPort);
+
+    var anyOtherSubChan = false;
+    var subChanKeys = Object.keys(self.channel.subChannels);
+    for (var i = 0; i < subChanKeys; i++) {
+        var subChan = self.channel.subChannels[subChanKeys[i]];
+        if (subChan.peers.get(hostPort)) {
+            anyOtherSubChan = true;
+            break;
+        }
+    }
+
+    if (!anyOtherSubChan) {
+        peer.close(noop);
+        self.channel.peers.delete(hostPort);
+    }
 };
 
 function noop() {}
