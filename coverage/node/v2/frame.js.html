@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for node/v2/frame.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../prettify.css">
+    <link rel="stylesheet" href="../../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header high">
+    <h1>Code coverage report for <span class="entity">node/v2/frame.js</span></h1>
+    <h2>
+        Statements: <span class="metric">84.11% <small>(90 / 107)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">58.06% <small>(18 / 31)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">50% <small>(4 / 8)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">89% <small>(89 / 100)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../../index.html">All files</a> &#187; <a href="index.html">node/v2/</a> &#187; frame.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19572</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-yes">9717</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9855</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9850</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Copyright (c) 2015 Uber Technologies, Inc.
+&nbsp;
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+&nbsp;
+'use strict';
+&nbsp;
+Frame.Overhead = 0x10;
+Frame.MaxSize = 0xffff;
+Frame.MaxBodySize = Frame.MaxSize - Frame.Overhead;
+Frame.MaxId = 0xfffffffe;
+Frame.NullId = 0xffffffff;
+&nbsp;
+Frame.Types = {};
+module.exports = Frame;
+&nbsp;
+var bufrw = require('bufrw');
+var errors = require('../errors');
+&nbsp;
+var Types = require('./index.js').Types;
+&nbsp;
+/* jshint maxparams:5 */
+&nbsp;
+function Frame(id, body) {
+    var self = this;
+    self.isLazy = false;
+    self.size = 0;
+    self.type = (body &amp;&amp; body.type) || 0;
+    if (id === null || id === undefined) {
+        self.id = Frame.NullId;
+    } else {
+        self.id = id;
+    }
+    self.body = body;
+}
+&nbsp;
+// size:2: type:1 reserved:1 id:4 reserved:8 ...
+Frame.RW = bufrw.Base(frameLength, readFrameFrom, writeFrameInto);
+&nbsp;
+function frameLength(frame) {
+    var body = frame.body;
+    var bodyRW = body.constructor.RW;
+&nbsp;
+    var length = 0;
+    length += bufrw.UInt16BE.width; // size:2:
+    length += bufrw.UInt8.width;    // type:1
+    length += 1;                    // reserved:1
+    length += bufrw.UInt32BE.width; // id:4
+    length += 8;                    // reserved:8 ...
+&nbsp;
+    var res = bodyRW.byteLength(body);
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!res.err) {
+        res.length += length;
+    }
+    return res;
+}
+&nbsp;
+function readFrameFrom(buffer, offset) {
+    var frame = new Frame();
+&nbsp;
+    var res;
+&nbsp;
+    res = bufrw.UInt16BE.readFrom(buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    offset = res.offset;
+    frame.size = res.value;
+&nbsp;
+    res = bufrw.UInt8.readFrom(buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    offset = res.offset;
+    frame.type = res.value;
+&nbsp;
+    var BodyType = Frame.Types[frame.type];
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!BodyType) {
+<span class="cstat-no" title="statement not covered" >        return bufrw.ReadResult.error(errors.InvalidFrameTypeError({</span>
+            typeNumber: frame.type
+        }), offset - 1);
+    }
+&nbsp;
+    offset += 1;
+&nbsp;
+    res = bufrw.UInt32BE.readFrom(buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    offset = res.offset;
+    frame.id = res.value;
+&nbsp;
+    offset += 8;
+&nbsp;
+    res = BodyType.RW.readFrom(buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) {
+<span class="cstat-no" title="statement not covered" >        if (frame.type === Types.CallRequest ||</span>
+            frame.type === Types.CallRequestCont
+        ) {
+            // TODO: wrapped?
+<span class="cstat-no" title="statement not covered" >            res.err.frameId = frame.id;</span>
+        }
+<span class="cstat-no" title="statement not covered" >        return res;</span>
+    }
+    offset = res.offset;
+    frame.body = res.value;
+&nbsp;
+    res.value = frame;
+    return res;
+}
+&nbsp;
+function writeFrameInto(frame, buffer, offset) {
+    var body = frame.body;
+    var bodyRW = body.constructor.RW;
+&nbsp;
+    var start = offset;
+    var end = offset;
+    var res;
+&nbsp;
+    // skip size, write later
+    offset += bufrw.UInt16BE.width;
+&nbsp;
+    res = bufrw.UInt8.writeInto(frame.type, buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    offset = res.offset;
+&nbsp;
+    end = offset + 1;
+    buffer.fill(0, offset, end);
+    offset = end;
+&nbsp;
+    res = bufrw.UInt32BE.writeInto(frame.id, buffer, offset);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    offset = res.offset;
+&nbsp;
+    end = offset + 8;
+    buffer.fill(0, offset, end);
+    offset = end;
+&nbsp;
+    res = bodyRW.writeInto(body, buffer, offset);
+    if (res.err) return res;
+    offset = res.offset;
+&nbsp;
+    frame.size = res.offset - start;
+    res = bufrw.UInt16BE.writeInto(frame.size, buffer, start);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (res.err) <span class="cstat-no" title="statement not covered" >return res;</span>
+    res.offset = offset;
+&nbsp;
+    return res;
+}
+&nbsp;
+Frame.fromBuffer = <span class="fstat-no" title="function not covered" >function fromBuffer(buffer) {</span>
+<span class="cstat-no" title="statement not covered" >    return bufrw.fromBuffer(Frame.RW, buffer, 0);</span>
+};
+&nbsp;
+Frame.prototype.byteLength = <span class="fstat-no" title="function not covered" >function byteLength() {</span>
+<span class="cstat-no" title="statement not covered" >    var self = this;</span>
+<span class="cstat-no" title="statement not covered" >    return bufrw.byteLength(Frame.RW, self);</span>
+};
+&nbsp;
+Frame.prototype.intoBuffer = <span class="fstat-no" title="function not covered" >function intoBuffer(buffer) {</span>
+<span class="cstat-no" title="statement not covered" >    var self = this;</span>
+<span class="cstat-no" title="statement not covered" >    return bufrw.intoBuffer(Frame.RW, self, buffer);</span>
+};
+&nbsp;
+Frame.prototype.toBuffer = <span class="fstat-no" title="function not covered" >function toBuffer() {</span>
+<span class="cstat-no" title="statement not covered" >    var self = this;</span>
+<span class="cstat-no" title="statement not covered" >    return bufrw.toBuffer(Frame.RW, self);</span>
+};
+&nbsp;</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Aug 25 2015 13:57:33 GMT-0700 (PDT)</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

@@ -1,0 +1,1848 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for node/connection.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../prettify.css">
+    <link rel="stylesheet" href="../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header high">
+    <h1>Code coverage report for <span class="entity">node/connection.js</span></h1>
+    <h2>
+        Statements: <span class="metric">93.51% <small>(245 / 262)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">78.13% <small>(75 / 96)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">90.48% <small>(38 / 42)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">93.51% <small>(245 / 262)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">node/</a> &#187; connection.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555
+556
+557
+558
+559
+560
+561
+562
+563
+564
+565
+566
+567
+568
+569
+570
+571
+572
+573
+574
+575
+576
+577
+578
+579
+580
+581
+582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592
+593
+594
+595
+596
+597
+598
+599
+600
+601
+602</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">1215</span>
+<span class="cline-any cline-yes">1214</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1137</span>
+<span class="cline-any cline-yes">1136</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">9078</span>
+<span class="cline-any cline-yes">9078</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">67</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">9848</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">9715</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">3587</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1311</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">9715</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9715</span>
+<span class="cline-any cline-yes">9715</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9715</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-yes">2162</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2071</span>
+<span class="cline-any cline-yes">2071</span>
+<span class="cline-any cline-yes">2071</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2263</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-yes">101</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1311</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1311</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1311</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1310</span>
+<span class="cline-any cline-yes">1310</span>
+<span class="cline-any cline-yes">11</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1299</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">1215</span>
+<span class="cline-any cline-yes">1215</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1137</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-yes">1097</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-yes">16</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1115</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-yes">1131</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2136</span>
+<span class="cline-any cline-yes">2136</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2134</span>
+<span class="cline-any cline-yes">2134</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">67</span>
+<span class="cline-any cline-yes">67</span>
+<span class="cline-any cline-yes">64</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">3606</span>
+<span class="cline-any cline-yes">3606</span>
+<span class="cline-any cline-yes">3605</span>
+<span class="cline-any cline-yes">3605</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1343</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3581</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">4603</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4603</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4603</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4603</span>
+<span class="cline-any cline-yes">2251</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">124</span>
+<span class="cline-any cline-yes">118</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2228</span>
+<span class="cline-any cline-yes">2226</span>
+<span class="cline-any cline-yes">154</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2226</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2304</span>
+<span class="cline-any cline-yes">2304</span>
+<span class="cline-any cline-yes">2285</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19</span>
+<span class="cline-any cline-yes">19</span>
+<span class="cline-any cline-yes">10</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2351</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">69</span>
+<span class="cline-any cline-yes">69</span>
+<span class="cline-any cline-yes">69</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-yes">2352</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Copyright (c) 2015 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+&nbsp;
+'use strict';
+&nbsp;
+var assert = require('assert');
+var bufrw = require('bufrw');
+var extend = require('xtend');
+var ReadMachine = require('bufrw/stream/read_machine');
+var inherits = require('util').inherits;
+&nbsp;
+var v2 = require('./v2');
+var errors = require('./errors');
+var States = require('./reqres_states');
+&nbsp;
+var TChannelConnectionBase = require('./connection_base');
+&nbsp;
+function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
+    assert(socketRemoteAddr !== channel.hostPort,
+        'refusing to create self connection'
+    );
+&nbsp;
+    var self = this;
+    TChannelConnectionBase.call(self, channel, direction, socketRemoteAddr);
+    self.identifiedEvent = self.defineEvent('identified');
+&nbsp;
+    if (direction === 'out') {
+        if (self.channel.emitConnectionMetrics) {
+            self.channel.connectionsInitiatedStat.increment(1, {
+                'host-port': self.channel.hostPort || '0.0.0.0:0',
+                'peer-host-port': socketRemoteAddr
+            });
+        }
+    } else {
+        if (self.channel.emitConnectionMetrics) {
+            self.channel.connectionsAcceptedStat.increment(1, {
+                'host-port': self.channel.hostPort,
+                'peer-host-port': socketRemoteAddr
+            });
+        }
+    }
+&nbsp;
+    self.socket = socket;
+    self.ephemeral = false;
+&nbsp;
+    var opts = {
+        logger: self.channel.logger,
+        random: self.channel.random,
+        timers: self.channel.timers,
+        hostPort: self.channel.hostPort,
+        requireAs: self.channel.requireAs,
+        requireCn: self.channel.requireCn,
+        tracer: self.tracer,
+        processName: self.options.processName,
+        connection: self
+    };
+&nbsp;
+    // jshint forin:true
+    self.handler = new v2.Handler(opts);
+&nbsp;
+    self.mach = ReadMachine(bufrw.UInt16BE, v2.Frame.RW);
+&nbsp;
+    self.setupSocket();
+    self.setupHandler();
+    self.start();
+}
+inherits(TChannelConnection, TChannelConnectionBase);
+&nbsp;
+TChannelConnection.prototype.extendLogInfo = function extendLogInfo(info) {
+    var self = this;
+&nbsp;
+    info.hostPort = self.channel.hostPort;
+    info.socketRemoteAddr = self.socketRemoteAddr;
+&nbsp;
+    return info;
+};
+&nbsp;
+TChannelConnection.prototype.setupSocket = function setupSocket() {
+    var self = this;
+&nbsp;
+    self.socket.setNoDelay(true);
+    // TODO: stream the data with backpressure
+    // when you add data event listener you go into
+    // a deoptimized mode and you have lost all
+    // backpressure on the stream
+    self.socket.on('data', onSocketChunk);
+    self.socket.on('close', onSocketClose);
+    self.socket.on('error', onSocketError);
+&nbsp;
+    // TODO: move to method for function optimization
+    function onSocketChunk(chunk) {
+        var err = self.mach.handleChunk(chunk);
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
+<span class="cstat-no" title="statement not covered" >            self.sendProtocolError('read', err);</span>
+        }
+    }
+&nbsp;
+    // TODO: move to method for function optimization
+    function onSocketClose() {
+        self.resetAll(errors.SocketClosedError({
+            reason: 'remote closed',
+            socketRemoteAddr: self.socketRemoteAddr,
+            direction: self.direction,
+            remoteName: self.remoteName
+        }));
+&nbsp;
+        if (self.ephemeral) {
+            var peer = self.channel.peers.get(self.socketRemoteAddr);
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (peer) {
+<span class="cstat-no" title="statement not covered" >                peer.close(noop);</span>
+            }
+            self.channel.peers.delete(self.socketRemoteAddr);
+        }
+    }
+&nbsp;
+    function onSocketError(err) {
+        self.onSocketError(err);
+    }
+};
+&nbsp;
+<span class="fstat-no" title="function not covered" >function noop() {</span>}
+&nbsp;
+TChannelConnection.prototype.setupHandler = function setupHandler() {
+    var self = this;
+&nbsp;
+    self.handler.write = function write(buf, done) {
+        self.socket.write(buf, null, done);
+    };
+&nbsp;
+    self.mach.emit = handleReadFrame;
+&nbsp;
+    self.handler.writeErrorEvent.on(onWriteError);
+    self.handler.errorEvent.on(onHandlerError);
+    self.handler.callIncomingRequestEvent.on(onCallRequest);
+    self.handler.callIncomingResponseEvent.on(onCallResponse);
+    self.handler.pingIncomingResponseEvent.on(onPingResponse);
+    self.handler.callIncomingErrorEvent.on(onCallError);
+&nbsp;
+    // TODO: restore dumping from old:
+    // var stream = self.socket;
+    // if (dumpEnabled) {
+    //     stream = stream.pipe(Spy(process.stdout, {
+    //         prefix: '&gt;&gt;&gt; ' + self.remoteAddr + ' '
+    //     }));
+    // }
+    // stream = stream
+    //     .pipe(self.reader)
+    //     .pipe(self.handler)
+    //     ;
+    // if (dumpEnabled) {
+    //     stream = stream.pipe(Spy(process.stdout, {
+    //         prefix: '&lt;&lt;&lt; ' + self.remoteAddr + ' '
+    //     }));
+    // }
+    // stream = stream
+    //     .pipe(self.socket)
+    //     ;
+&nbsp;
+    function onWriteError(err) {
+        self.onWriteError(err);
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function onHandlerError(err) {</span>
+<span class="cstat-no" title="statement not covered" >        self.onHandlerError(err);</span>
+    }
+&nbsp;
+    function handleReadFrame(frame) {
+        self.handleReadFrame(frame);
+    }
+&nbsp;
+    function onCallRequest(req) {
+        self.handleCallRequest(req);
+    }
+&nbsp;
+    function onCallResponse(res) {
+        self.onCallResponse(res);
+    }
+&nbsp;
+    function onPingResponse(res) {
+        self.handlePingResponse(res);
+    }
+&nbsp;
+    function onCallError(err) {
+        self.onCallError(err);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.sendProtocolError =
+function sendProtocolError(type, err) {
+    var self = this;
+&nbsp;
+    assert(type === 'write' || <span class="branch-1 cbranch-no" title="branch not covered" >type === 'read',</span>
+        'Got invalid type: ' + type);
+&nbsp;
+    var protocolError;
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (type === 'read') {
+<span class="cstat-no" title="statement not covered" >        protocolError = errors.TChannelReadProtocolError(err, {</span>
+            remoteName: self.remoteName,
+            localName: self.channel.hostPort,
+            frameId: err.frameId
+        });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        self.channel.inboundProtocolErrorsStat.increment(1, {</span>
+            'host-port': self.channel.hostPort || '0.0.0.0:0',
+            'peer-host-port': self.socketRemoteAddr
+        });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        self.handler.sendErrorFrame({</span>
+            id: protocolError.frameId || v2.Frame.NullId
+        }, 'ProtocolError', protocolError.message);
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        self.resetAll(protocolError);</span>
+    } else <span class="missing-if-branch" title="else path not taken" >E</span>if (type === 'write') {
+        protocolError = errors.TChannelWriteProtocolError(err, {
+            remoteName: self.remoteName,
+            localName: self.channel.hostPort,
+            frameId: err.frameId
+        });
+&nbsp;
+        // TODO: what if you have a write error in a call req cont frame
+        self.resetAll(protocolError);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.onWriteError = function onWriteError(err) {
+    var self = this;
+&nbsp;
+    self.sendProtocolError('write', err);
+};
+&nbsp;
+TChannelConnection.prototype.onHandlerError = <span class="fstat-no" title="function not covered" >function onHandlerError(err) {</span>
+<span class="cstat-no" title="statement not covered" >    var self = this;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (err) {</span>
+<span class="cstat-no" title="statement not covered" >        self.resetAll(err);</span>
+    }
+};
+&nbsp;
+TChannelConnection.prototype.handlePingResponse = function handlePingResponse(resFrame) {
+    var self = this;
+    // TODO: explicit type
+    self.pingResponseEvent.emit(self, {id: resFrame.id});
+};
+&nbsp;
+TChannelConnection.prototype.handleReadFrame = function handleReadFrame(frame) {
+    var self = this;
+&nbsp;
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!self.closing) {
+        self.ops.lastTimeoutTime = 0;
+    }
+&nbsp;
+    self.handler.handleFrame(frame);
+};
+&nbsp;
+TChannelConnection.prototype.onCallResponse = function onCallResponse(res) {
+    var self = this;
+&nbsp;
+    var req = self.ops.getOutReq(res.id);
+    if (res.state === States.Done || res.state === States.Error) {
+        self.ops.popOutReq(res.id, res);
+    } else {
+        self._deferPopOutReq(res);
+    }
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!req) {
+<span class="cstat-no" title="statement not covered" >        return;</span>
+    }
+&nbsp;
+    if (self.tracer &amp;&amp; !req.forwardTrace) {
+        // TODO: better annotations
+        req.span.annotate('cr');
+        self.tracer.report(req.span);
+        res.span = req.span;
+    }
+&nbsp;
+    req.emitResponse(res);
+};
+&nbsp;
+TChannelConnection.prototype._deferPopOutReq = function _deferPopOutReq(res) {
+    var self = this;
+    var called = false;
+&nbsp;
+    res.errorEvent.on(popOutReq);
+    res.finishEvent.on(popOutReq);
+&nbsp;
+    // TODO: move to method
+    function popOutReq() {
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (called) {
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
+&nbsp;
+        called = true;
+        self.ops.popOutReq(res.id, res);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.ping = function ping() {
+    var self = this;
+    return self.handler.sendPingRequest();
+};
+&nbsp;
+TChannelConnection.prototype.onCallError = function onCallError(err) {
+    var self = this;
+&nbsp;
+    var req = self.ops.getOutReq(err.originalId);
+&nbsp;
+    if (req &amp;&amp; req.res) {
+        req.res.errorEvent.emit(req.res, err);
+    } else {
+        // Only popOutReq if there is no call response object yet
+        req = self.ops.popOutReq(err.originalId, err);
+        if (!req) {
+            return;
+        }
+&nbsp;
+        req.emitError(err);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.start = function start() {
+    var self = this;
+    if (self.direction === 'out') {
+        self.handler.sendInitRequest();
+        self.handler.initResponseEvent.on(onOutIdentified);
+    } else {
+        self.handler.initRequestEvent.on(onInIdentified);
+    }
+&nbsp;
+    var now = self.timers.now();
+    var initOp = new InitOperation(self, now, self.channel.initTimeout);
+    var initTo = self.channel.timeHeap.update(initOp, now);
+&nbsp;
+    function onOutIdentified(init) {
+        initTo.cancel();
+        self.onOutIdentified(init);
+    }
+&nbsp;
+    function onInIdentified(init) {
+        initTo.cancel();
+        self.onInIdentified(init);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.onOutIdentified = function onOutIdentified(init) {
+    var self = this;
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (init.hostPort === '0.0.0.0:0') {
+<span class="cstat-no" title="statement not covered" >        return self.emit('error', errors.EphemeralInitResponse({</span>
+            hostPort: init.hostPort,
+            socketRemoteAddr: self.socketRemoteAddr,
+            processName: init.processName
+        }));
+    }
+&nbsp;
+    self.remoteName = init.hostPort;
+    self.identifiedEvent.emit(self, {
+        hostPort: init.hostPort,
+        processName: init.processName
+    });
+};
+&nbsp;
+TChannelConnection.prototype.onInIdentified = function onInIdentified(init) {
+    var self = this;
+    if (init.hostPort === '0.0.0.0:0') {
+        self.ephemeral = true;
+        self.remoteName = '' + self.socket.remoteAddress + ':' + self.socket.remotePort;
+        assert(self.remoteName !== self.channel.hostPort,
+              'should not be able to receive ephemeral connection from self');
+    } else {
+        self.remoteName = init.hostPort;
+    }
+&nbsp;
+    self.channel.peers.add(self.remoteName).addConnection(self);
+    self.identifiedEvent.emit(self, {
+        hostPort: self.remoteName,
+        processName: init.processName
+    });
+};
+&nbsp;
+TChannelConnection.prototype.close = function close(callback) {
+    var self = this;
+    if (self.socket.destroyed) {
+        callback();
+    } else {
+        self.socket.once('close', callback);
+        self.resetAll(errors.LocalSocketCloseError());
+    }
+};
+&nbsp;
+TChannelConnection.prototype.onSocketError = function onSocketError(err) {
+    var self = this;
+    if (!self.closing) {
+        self.resetAll(errors.SocketError(err, {
+            hostPort: self.channel.hostPort,
+            direction: self.direction,
+            socketRemoteAddr: self.socketRemoteAddr
+        }));
+    }
+};
+&nbsp;
+TChannelConnection.prototype.nextFrameId = <span class="fstat-no" title="function not covered" >function nextFrameId() {</span>
+<span class="cstat-no" title="statement not covered" >    var self = this;</span>
+<span class="cstat-no" title="statement not covered" >    return self.handler.nextFrameId();</span>
+};
+&nbsp;
+TChannelConnection.prototype.buildOutRequest = function buildOutRequest(options) {
+    var self = this;
+    var req = self.handler.buildOutRequest(options);
+    req.errorEvent.on(onReqError);
+    return req;
+&nbsp;
+    function onReqError(err) {
+        self.ops.popOutReq(req.id, err);
+    }
+};
+&nbsp;
+TChannelConnection.prototype.buildOutResponse = function buildOutResponse(req, options) {
+    var self = this;
+&nbsp;
+    options = options || <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
+    options.inreq = req;
+    options.channel = self.channel;
+    options.logger = self.logger;
+    options.random = self.random;
+    options.timers = self.timers;
+&nbsp;
+    options.tracing = req.tracing;
+    options.span = req.span;
+    options.checksumType = req.checksum &amp;&amp; req.checksum.type;
+&nbsp;
+    // TODO: take over popInReq on req/res error?
+    return self.handler.buildOutResponse(req, options);
+};
+&nbsp;
+// this connection is completely broken, and is going away
+// In addition to erroring out all of the pending work, we reset the state
+// in case anybody stumbles across this object in a core dump.
+TChannelConnection.prototype.resetAll = function resetAll(err) {
+    var self = this;
+&nbsp;
+    self.ops.destroy();
+&nbsp;
+    err = err || <span class="branch-1 cbranch-no" title="branch not covered" >errors.TChannelConnectionCloseError();</span>
+&nbsp;
+    if (self.closing) {
+        return;
+    }
+&nbsp;
+    self.closing = true;
+    self.closeError = err;
+    self.socket.destroy();
+&nbsp;
+    var requests = self.ops.getRequests();
+    var pending = self.ops.getPending();
+&nbsp;
+    var inOpKeys = Object.keys(requests.in);
+    var outOpKeys = Object.keys(requests.out);
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!err) {
+<span class="cstat-no" title="statement not covered" >        err = errors.UnknownConnectionReset();</span>
+    }
+&nbsp;
+    if (!self.remoteName &amp;&amp; self.channel.emitConnectionMetrics) {
+        if (self.direction === 'out') {
+            self.channel.connectionsConnectErrorsStat.increment(1, {
+                'host-port': self.channel.hostPort || <span class="branch-1 cbranch-no" title="branch not covered" >'0.0.0.0:0',</span>
+                'peer-host-port': self.socketRemoteAddr
+            });
+        } else {
+            self.channel.connectionsAcceptedErrorsStat.increment(1, {
+                'host-port': self.channel.hostPort,
+                'peer-host-port': self.socketRemoteAddr
+            });
+        }
+    } else if (self.channel.emitConnectionMetrics) {
+        if (err.type !== 'tchannel.socket-local-closed') {
+            self.channel.connectionsErrorsStat.increment(1, {
+                'host-port': self.channel.hostPort || <span class="branch-1 cbranch-no" title="branch not covered" >'0.0.0.0:0',</span>
+                'peer-host-port': self.remoteName,
+                'type': err.type // TODO unified error type
+            });
+        }
+&nbsp;
+        self.channel.connectionsClosedStat.increment(1, {
+            'host-port': self.channel.hostPort || '0.0.0.0:0',
+            'peer-host-port': self.remoteName,
+            'reason': err.type // TODO unified reason type
+        });
+    }
+&nbsp;
+    var logInfo = {
+        error: err,
+        remoteName: self.remoteName,
+        localName: self.channel.hostPort,
+        socketRemoteAddr: self.socketRemoteAddr,
+        numInOps: inOpKeys.length,
+        numOutOps: outOpKeys.length,
+        inPending: pending.in,
+        outPending: pending.out
+    };
+&nbsp;
+    // requests that we've received we can delete, but these reqs may have started their
+    //   own outgoing work, which is hard to cancel. By setting this.closing, we make sure
+    //   that once they do finish that their callback will swallow the response.
+    inOpKeys.forEach(function eachInOp(id) {
+        self.ops.popInReq(id);
+        // TODO: support canceling pending handlers
+        // TODO report or handle or log errors or something
+    });
+&nbsp;
+    // for all outgoing requests, forward the triggering error to the user callback
+    outOpKeys.forEach(function eachOutOp(id) {
+        var req = self.ops.popOutReq(id);
+        if (!req) {
+            return;
+        }
+&nbsp;
+        var info = req.extendLogInfo({
+            socketRemoteAddr: self.socketRemoteAddr,
+            direction: self.direction,
+            remoteName: self.remoteName
+        });
+&nbsp;
+        var reqErr = err;
+        if (reqErr.type === 'tchannel.socket-local-closed') {
+            reqErr = errors.TChannelLocalResetError(reqErr, info);
+        } else {
+            reqErr = errors.TChannelConnectionResetError(reqErr, info);
+        }
+&nbsp;
+        req.emitError(reqErr);
+    });
+&nbsp;
+    self.ops.clear();
+&nbsp;
+    var errorCodeName = errors.classify(err);
+    if (errorCodeName !== 'NetworkError' &amp;&amp;
+        errorCodeName !== 'ProtocolError'
+    ) {
+        self.logger.warn('resetting connection', logInfo);
+        self.errorEvent.emit(self, err);
+    } else if (
+        err.type !== 'tchannel.socket-closed' &amp;&amp;
+        err.type !== 'tchannel.socket-local-closed'
+    ) {
+        logInfo.error = extend(err);
+        logInfo.error.message = err.message;
+        self.logger.info('resetting connection', logInfo);
+    }
+&nbsp;
+    self.closeEvent.emit(self, err);
+};
+&nbsp;
+function InitOperation(connection, time, timeout) {
+    var self = this;
+&nbsp;
+    self.connection = connection;
+    self.time = time;
+    self.timeout = timeout;
+}
+&nbsp;
+InitOperation.prototype.onTimeout = function onTimeout(now) {
+    var self = this;
+&nbsp;
+    // noop if identify succeeded
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (self.connection.remoteName) {
+<span class="cstat-no" title="statement not covered" >        return;</span>
+    }
+&nbsp;
+    var elapsed = now - self.time;
+    var err = errors.ConnectionTimeoutError({
+        start: self.time,
+        elapsed: elapsed,
+        timeout: self.timeout
+    });
+&nbsp;
+    self.connection.logger.warn('destroying due to init timeout', self.connection.extendLogInfo({
+        error: err
+    }));
+    self.connection.resetAll(err);
+};
+&nbsp;
+module.exports = TChannelConnection;
+&nbsp;</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Aug 25 2015 13:57:33 GMT-0700 (PDT)</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

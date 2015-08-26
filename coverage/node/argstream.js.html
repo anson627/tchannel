@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for node/argstream.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../prettify.css">
+    <link rel="stylesheet" href="../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header high">
+    <h1>Code coverage report for <span class="entity">node/argstream.js</span></h1>
+    <h2>
+        Statements: <span class="metric">93.67% <small>(148 / 158)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">76.92% <small>(40 / 52)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">95.65% <small>(22 / 23)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">94.67% <small>(142 / 150)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">node/</a> &#187; argstream.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1108</span>
+<span class="cline-any cline-yes">917</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">475</span>
+<span class="cline-any cline-yes">205</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">270</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">535</span>
+<span class="cline-any cline-yes">267</span>
+<span class="cline-any cline-yes">267</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-yes">982</span>
+<span class="cline-any cline-yes">982</span>
+<span class="cline-any cline-yes">982</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-yes">267</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">714</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">535</span>
+<span class="cline-any cline-yes">535</span>
+<span class="cline-any cline-yes">535</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">535</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1611</span>
+<span class="cline-any cline-yes">773</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">1111</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">1196</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-yes">837</span>
+<span class="cline-any cline-yes">837</span>
+<span class="cline-any cline-yes">837</span>
+<span class="cline-any cline-yes">837</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">3982</span>
+<span class="cline-any cline-yes">3982</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3982</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3982</span>
+<span class="cline-any cline-yes">1675</span>
+<span class="cline-any cline-yes">838</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2307</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3982</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2307</span>
+<span class="cline-any cline-yes">2307</span>
+<span class="cline-any cline-yes">2307</span>
+<span class="cline-any cline-yes">2307</span>
+<span class="cline-any cline-yes">826</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1481</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">4751</span>
+<span class="cline-any cline-yes">4751</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">166</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-yes">1003</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">4432</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-yes">2216</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">3239</span>
+<span class="cline-any cline-yes">3239</span>
+<span class="cline-any cline-yes">1828</span>
+<span class="cline-any cline-yes">1828</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3239</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">22</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-yes">6</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Copyright (c) 2015 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+&nbsp;
+'use strict';
+&nbsp;
+/*
+ * Provides federated streams for handling call arguments
+ *
+ * InArgStream is for handling incoming arg parts from call frames.  It handles
+ * dispatching the arg chunks into .arg{1,2,3} streams.
+ *
+ * OutArgStream is for creating outgoing arg parts by writing to .arg{1,2,3}
+ * streams.  It handles buffering as many parts as are written within one event
+ * loop tick into an Array of arg chunks.  Such array is then flushed using
+ * setImmediate.
+ *
+ * Due to the semantic complexity involved here, this code is tested by an
+ * accompanying exhaistive search test in test/argstream.js.  This test has
+ * both unit tests (disabled by default for speed) and an integration test.
+ */
+&nbsp;
+var inherits = require('util').inherits;
+var EventEmitter = require('./lib/event_emitter');
+var PassThrough = require('stream').PassThrough;
+var Ready = require('ready-signal');
+var errors = require('./errors');
+&nbsp;
+function ArgStream() {
+    var self = this;
+    EventEmitter.call(self);
+    self.errorEvent = self.defineEvent('error');
+    self.frameEvent = self.defineEvent('frame');
+    self.finishEvent = self.defineEvent('finish');
+&nbsp;
+    self.arg2 = StreamArg();
+    self.arg3 = StreamArg();
+&nbsp;
+    self.arg2.on('error', passError);
+    self.arg3.on('error', passError);
+<span class="fstat-no" title="function not covered" >    function passError(err) {</span>
+<span class="cstat-no" title="statement not covered" >        self.errorEvent.emit(self, err);</span>
+    }
+&nbsp;
+    self.arg3.on('start', function onArg3Start() {
+        if (!self.arg2._writableState.ended) self.arg2.end();
+    });
+}
+&nbsp;
+inherits(ArgStream, EventEmitter);
+&nbsp;
+function InArgStream() {
+    if (!(this instanceof InArgStream)) {
+        return new InArgStream();
+    }
+    var self = this;
+    ArgStream.call(self);
+    self.streams = [self.arg2, self.arg3];
+    self._iStream = 0;
+    self.finished = false;
+    self._numFinished = 0;
+    self.arg2.on('finish', argFinished);
+    self.arg3.on('finish', argFinished);
+    function argFinished() {
+        if (++self._numFinished &gt;= 2 &amp;&amp; !self.finished) {
+            self.finished = true;
+            self.finishEvent.emit(self);
+        }
+    }
+}
+&nbsp;
+inherits(InArgStream, ArgStream);
+&nbsp;
+InArgStream.prototype.handleFrame = function handleFrame(parts, isLast) {
+    var self = this;
+    var stream = self.streams[self._iStream];
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (self.finished) {
+        // return new Error('unknown frame handling state');
+<span class="cstat-no" title="statement not covered" >        return errors.ArgStreamFinishedError();</span>
+    }
+&nbsp;
+    for (var i = 0; i &lt; parts.length; i++) {
+        if (i &gt; 0) stream = advance();
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (!stream) <span class="cstat-no" title="statement not covered" >break;</span>
+        if (parts[i].length) stream.write(parts[i]);
+    }
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (i &lt; parts.length) {
+<span class="cstat-no" title="statement not covered" >        return errors.ArgStreamExceededFramePartsError();</span>
+    }
+&nbsp;
+    if (isLast) {
+        while (stream) stream = advance();
+    }
+&nbsp;
+    return null;
+&nbsp;
+    function advance() {
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (self._iStream &lt; self.streams.length) {
+            self.streams[self._iStream].end();
+            self._iStream++;
+        }
+        return self.streams[self._iStream];
+    }
+};
+&nbsp;
+function OutArgStream() {
+    if (!(this instanceof OutArgStream)) {
+        return new OutArgStream();
+    }
+    var self = this;
+    ArgStream.call(self);
+    self._flushImmed = null;
+    self.finished = false;
+    self.frame = [Buffer(0)];
+    self.currentArgN = 2;
+    self.arg2.on('data', function onArg2Data(chunk) {
+        self._handleFrameChunk(2, chunk);
+    });
+    self.arg3.on('data', function onArg3Data(chunk) {
+        self._handleFrameChunk(3, chunk);
+    });
+&nbsp;
+    self.arg2.on('finish', function onArg2Finish() {
+        self._handleFrameChunk(2, null);
+    });
+    self.arg3.on('finish', function onArg3Finish() {
+        if (!self.finished) {
+            self._handleFrameChunk(3, null);
+            self._flushParts(true);
+            self.finished = true;
+            self.finishEvent.emit(self);
+        }
+    });
+}
+&nbsp;
+inherits(OutArgStream, ArgStream);
+&nbsp;
+OutArgStream.prototype._handleFrameChunk = function _handleFrameChunk(n, chunk) {
+    var self = this;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (n &lt; self.currentArgN) {
+<span class="cstat-no" title="statement not covered" >        self.errorEvent.emit(self, errors.ArgChunkOutOfOrderError({</span>
+            current: self.currentArgN,
+            got: n
+        }));
+    } else <span class="missing-if-branch" title="if path not taken" >I</span>if (n &gt; self.currentArgN) {
+<span class="cstat-no" title="statement not covered" >        if (n - self.currentArgN &gt; 1) {</span>
+<span class="cstat-no" title="statement not covered" >            self.errorEvent.emit(self, errors.ArgChunkGapError({</span>
+                current: self.currentArgN,
+                got: n
+            }));
+        }
+<span class="cstat-no" title="statement not covered" >        self.currentArgN++;</span>
+<span class="cstat-no" title="statement not covered" >        self.frame.push(chunk);</span>
+    } else if (chunk === null) {
+        if (++self.currentArgN &lt;= 3) {
+            self.frame.push(Buffer(0));
+        }
+    } else {
+        self._appendFrameChunk(chunk);
+    }
+    self.deferFlushParts();
+};
+&nbsp;
+OutArgStream.prototype._appendFrameChunk = function _appendFrameChunk(chunk) {
+    var self = this;
+    var i = self.frame.length - 1;
+    var buf = self.frame[i];
+    if (buf.length) {
+        self.frame[i] = Buffer.concat([buf, chunk]);
+    } else {
+        self.frame[i] = chunk;
+    }
+};
+&nbsp;
+OutArgStream.prototype.deferFlushParts = function deferFlushParts() {
+    var self = this;
+    if (!self._flushImmed) {
+        self._flushImmed = setImmediate(function() {
+            self._flushParts();
+        });
+    }
+};
+&nbsp;
+OutArgStream.prototype._flushParts = function _flushParts(isLast) {
+    var self = this;
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (self._flushImmed) {
+        clearImmediate(self._flushImmed);
+        self._flushImmed = null;
+    }
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (self.finished) <span class="cstat-no" title="statement not covered" >return;</span>
+    isLast = Boolean(isLast);
+    var frame = self.frame;
+    self.frame = [Buffer(0)];
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (frame.length) self.frameEvent.emit(self, [frame, isLast]);
+};
+&nbsp;
+function StreamArg(options) {
+    if (!(this instanceof StreamArg)) {
+        return new StreamArg(options);
+    }
+    var self = this;
+    PassThrough.call(self, options);
+    self.started = false;
+    self.onValueReady = self.onValueReady.bind(self);
+    self.buf = null;
+}
+inherits(StreamArg, PassThrough);
+&nbsp;
+StreamArg.prototype._write = function _write(chunk, encoding, callback) {
+    var self = this;
+    if (!self.started) {
+        self.started = true;
+        self.emit('start');
+    }
+    PassThrough.prototype._write.call(self, chunk, encoding, callback);
+};
+&nbsp;
+StreamArg.prototype.onValueReady = function onValueReady(callback) {
+    var self = this;
+    self.onValueReady = Ready();
+    bufferStreamData(self, self.onValueReady.signal);
+    self.onValueReady(callback);
+};
+&nbsp;
+function bufferStreamData(stream, callback) {
+    var parts = [];
+    stream.on('data', onData);
+    stream.on('error', finish);
+    stream.on('end', finish);
+    function onData(chunk) {
+        parts.push(chunk);
+    }
+    function finish(err) {
+        stream.removeListener('data', onData);
+        stream.removeListener('error', finish);
+        stream.removeListener('end', finish);
+        var buf = Buffer.concat(parts);
+        stream.buf = buf;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (err === undefined) err = null;
+        callback(err, buf);
+    }
+}
+&nbsp;
+module.exports.InArgStream = InArgStream;
+module.exports.OutArgStream = OutArgStream;
+&nbsp;</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Aug 25 2015 13:57:33 GMT-0700 (PDT)</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

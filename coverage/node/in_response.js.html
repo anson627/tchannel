@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for node/in_response.js</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../prettify.css">
+    <link rel="stylesheet" href="../base.css">
+    <style type='text/css'>
+        div.coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class="header high">
+    <h1>Code coverage report for <span class="entity">node/in_response.js</span></h1>
+    <h2>
+        Statements: <span class="metric">97.83% <small>(45 / 46)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Branches: <span class="metric">82.61% <small>(19 / 23)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Functions: <span class="metric">100% <small>(4 / 4)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">97.83% <small>(45 / 46)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
+    </h2>
+    <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">node/</a> &#187; in_response.js</div>
+</div>
+<div class="body">
+<pre><table class="coverage">
+<tr><td class="line-count">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2290</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2286</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2186</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1324</span>
+<span class="cline-any cline-yes">1324</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Copyright (c) 2015 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+&nbsp;
+'use strict';
+&nbsp;
+var EventEmitter = require('./lib/event_emitter');
+var inherits = require('util').inherits;
+var errors = require('./errors');
+&nbsp;
+var States = require('./reqres_states');
+&nbsp;
+var emptyBuffer = Buffer(0);
+&nbsp;
+function TChannelInResponse(id, options) {
+    options = options || <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
+    var self = this;
+    EventEmitter.call(self);
+    self.errorEvent = self.defineEvent('error');
+    self.finishEvent = self.defineEvent('finish');
+&nbsp;
+    self.logger = options.logger;
+    self.random = options.random;
+    self.timers = options.timers;
+&nbsp;
+    self.state = States.Initial;
+    self.remoteAddr = null;
+    self.id = id || <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
+    self.code = options.code || 0;
+    self.checksum = options.checksum || null;
+    self.headers = options.headers || {};
+    self.ok = self.code === 0; // TODO: probably okay, but a bit jank
+    self.span = options.span || null;
+&nbsp;
+    self.streamed = false;
+    self._argstream = null;
+    self.arg1 = emptyBuffer;
+    self.arg2 = emptyBuffer;
+    self.arg3 = emptyBuffer;
+&nbsp;
+    self.start = self.timers.now();
+&nbsp;
+    self.finishEvent.on(self.onFinish);
+}
+&nbsp;
+inherits(TChannelInResponse, EventEmitter);
+&nbsp;
+TChannelInResponse.prototype.type = 'tchannel.incoming-response';
+&nbsp;
+TChannelInResponse.prototype.onFinish = function onFinish(_arg, self) {
+    self.state = States.Done;
+};
+&nbsp;
+TChannelInResponse.prototype.handleFrame = function handleFrame(parts, isLast) {
+    var self = this;
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (parts.length !== 3 || self.state !== States.Initial || !isLast) {
+<span class="cstat-no" title="statement not covered" >        return errors.ArgStreamUnimplementedError();</span>
+    }
+&nbsp;
+    self.arg1 = parts[0] || emptyBuffer;
+    self.arg2 = parts[1] || emptyBuffer;
+    self.arg3 = parts[2] || <span class="branch-1 cbranch-no" title="branch not covered" >emptyBuffer;</span>
+&nbsp;
+    self.finishEvent.emit(self);
+&nbsp;
+    return null;
+};
+&nbsp;
+TChannelInResponse.prototype.withArg23 = function withArg23(callback) {
+    var self = this;
+    callback(null, self.arg2, self.arg3);
+};
+&nbsp;
+module.exports = TChannelInResponse;
+&nbsp;</pre></td></tr>
+</table></pre>
+
+</div>
+<div class="footer">
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Aug 25 2015 13:57:33 GMT-0700 (PDT)</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>
