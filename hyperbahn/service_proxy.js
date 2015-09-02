@@ -51,13 +51,14 @@ function ServiceDispatchHandler(options) {
     self.permissionsCache = options.permissionsCache;
     self.serviceReqDefaults = options.serviceReqDefaults || {};
 
-    self.circuits = options.circuitsConfig && options.circuitsConfig.enabled ? new Circuits({
-        timeHeap: self.channel.timeHeap,
-        timers: self.channel.timers,
-        random: self.random,
-        egressNodes: self.egressNodes,
-        config: options.circuitsConfig
-    }) : null;
+    self.circuitsEnabled = false;
+    self.circuitsConfig = options.circuitsConfig;
+    self.circuits = null;
+    self.circuitTestServiceName = null;
+    self.boundOnCircuitStateChange = onCircuitStateChange;
+    if (self.circuitsConfig && self.circuitsConfig.enabled) {
+        self.enableCircuits();
+    }
 
     self.servicePurgePeriod = options.servicePurgePeriod ||
         SERVICE_PURGE_PERIOD;
@@ -75,12 +76,8 @@ function ServiceDispatchHandler(options) {
 
     self.egressNodes.on('membershipChanged', onMembershipChanged);
 
-    if (self.circuits) {
-        self.circuits.circuitStateChangeEvent.on(onCircuitStateChange);
-    }
-
     function onCircuitStateChange(stateChange) {
-        self.handleCircuitStateChange(stateChange);
+        self.onCircuitStateChange(stateChange);
     }
 
     function onMembershipChanged() {
@@ -248,9 +245,11 @@ function createServiceChannel(serviceName) {
         }
     }
 
+    var circuitEnabled = self.circuitsEnabled || self.circuitTestServiceName === serviceName;
+
     svcchan.handler = new RelayHandler(
         svcchan,
-        mode === 'exit' && self.circuits);
+        mode === 'exit' && circuitEnabled && self.circuits);
 
     return svcchan;
 };
@@ -483,8 +482,8 @@ function isExitFor(serviceName) {
     return chan.serviceProxyMode === 'exit';
 };
 
-ServiceDispatchHandler.prototype.handleCircuitStateChange =
-function handleCircuitStateChange(change) {
+ServiceDispatchHandler.prototype.onCircuitStateChange =
+function onCircuitStateChange(change) {
     var self = this;
 
     var circuit = change.circuit;
@@ -545,6 +544,110 @@ function destroy() {
     var self = this;
     self.channel.timers.clearTimeout(self.servicePurgeTimer);
     self.rateLimiter.destroy();
+};
+
+ServiceDispatchHandler.prototype.initCircuits =
+function initCircuits() {
+    var self = this;
+
+    self.circuits = new Circuits({
+        timeHeap: self.channel.timeHeap,
+        timers: self.channel.timers,
+        random: self.random,
+        egressNodes: self.egressNodes,
+        config: self.circuitsConfig
+    });
+
+    self.circuits.circuitStateChangeEvent.on(self.boundOnCircuitStateChange);
+};
+
+ServiceDispatchHandler.prototype.enableCircuits =
+function enableCircuits() {
+    var self = this;
+
+    if (self.circuitsEnabled) {
+        return;
+    }
+    self.circuitsEnabled = true;
+
+    if (!self.circuits) {
+        self.initCircuits();
+    }
+
+    var serviceNames = Object.keys(self.channel.subChannels);
+    for (var index = 0; index < serviceNames.length; index++) {
+        var serviceName = serviceNames[index];
+        var subChannel = self.channel.subChannels[serviceName];
+        if (subChannel.handler.type === 'tchannel.relay-handler' &&
+            subChannel.serviceProxyMode === 'exit'
+        ) {
+            subChannel.handler.circuits = self.circuits;
+        }
+    }
+};
+
+ServiceDispatchHandler.prototype.disableCircuits =
+function disableCircuits() {
+    var self = this;
+
+    if (!self.circuitsEnabled) {
+        return;
+    }
+    self.circuitsEnabled = false;
+
+    var serviceNames = Object.keys(self.channel.subChannels);
+    for (var index = 0; index < serviceNames.length; index++) {
+        var serviceName = serviceNames[index];
+        var subChannel = self.channel.subChannels[serviceName];
+        if (subChannel.handler.type === 'tchannel.relay-handler' &&
+            subChannel.serviceProxyMode === 'exit'
+        ) {
+            subChannel.handler.circuits = null;
+        }
+    }
+};
+
+// To try out circuit breaking with just one service.
+ServiceDispatchHandler.prototype.enableCircuitTestService =
+function enableCircuitTestService(serviceName) {
+    var self = this;
+
+    if (self.circuitTestServiceName !== null) {
+        self.disableCircuitTestService();
+    }
+
+    // for the subchannel if it exists already:
+    var subChannel = self.channel.subChannel[serviceName];
+    if (subChannel &&
+        subChannel.handler.type === 'tchannel.relay-handler' &&
+        subChannel.serviceProxymode === 'exit'
+    ) {
+        subChannel.handler.circuits = self.circuits;
+    }
+
+    // for subsequently added subchannels with the given service name:
+    self.circuitTestServiceName = serviceName;
+};
+
+ServiceDispatchHandler.prototype.disableCircuitTestService =
+function disableCircuitTestService() {
+    var self = this;
+
+    if (self.circuitTestServiceName === null) {
+        return;
+    }
+
+    // for the subchannel if it exists already:
+    var subChannel = self.channel.subChannel[self.circuitTestServiceName];
+    if (subChannel &&
+        subChannel.handler.type === 'tchannel.relay-handler' &&
+        subChannel.serviceProxymode === 'exit'
+    ) {
+        subChannel.handler.circuits = null;
+    }
+
+    // to ensure the circuit is not enabled for subsuequently created channels:
+    self.circuitTestServiceName = null;
 };
 
 ServiceDispatchHandler.prototype.enableRateLimiter =

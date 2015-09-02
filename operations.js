@@ -48,7 +48,7 @@ function Operations(opts) {
     self.lastTimeoutTime = 0;
 }
 
-function OperationTombstone(operations, id, time, timeout) {
+function OperationTombstone(operations, id, time, req) {
     var self = this;
 
     self.type = 'tchannel.operation.tombstone';
@@ -57,8 +57,12 @@ function OperationTombstone(operations, id, time, timeout) {
     self.operations = operations;
     self.id = id;
     self.time = time;
-    self.timeout = timeout;
+    self.timeout = TOMBSTONE_TTL_OFFSET + req.timeout;
     self.timeHeapHandle = null;
+    self.destroyed = false;
+    self.serviceName = req.serviceName;
+    self.callerName = req.headers.cn;
+    self.endpoint = req.endpoint;
 }
 
 OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
@@ -67,6 +71,9 @@ OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
     var conn = self.operations && self.operations.connection;
 
     info.id = self.id;
+    info.serviceName = self.serviceName;
+    info.callerName = self.callerName;
+    info.endpoint = self.endpoint;
     info.tombstoneTime = self.time;
     info.tombstoneTTL = self.timeout;
     info.heapCanceled = self.timeHeapHandle && !self.timeHeapHandle.item;
@@ -86,8 +93,24 @@ OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
     return info;
 };
 
+OperationTombstone.prototype.destroy = function destroy(now) {
+    var self = this;
+
+    self.destroyed = true;
+
+    self.onTimeout(now);
+};
+
 OperationTombstone.prototype.onTimeout = function onTimeout(now) {
     var self = this;
+
+    if (!self.destroyed && now < self.timeout + self.time) {
+        self.logger.error('tombstone timed out too early', self.extendLogInfo({
+            now: now,
+            expireTime: self.timeout + self.time,
+            delta: (self.timeout + self.time) - now
+        }));
+    }
 
     if (self.operations &&
         self.operations.requests.out[self.id] === self) {
@@ -209,8 +232,7 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
     }
 
     var now = self.timers.now();
-    var timeout = TOMBSTONE_TTL_OFFSET + req.timeout;
-    var tombstone = new OperationTombstone(self, id, now, timeout);
+    var tombstone = new OperationTombstone(self, id, now, req);
     req.operations = null;
     self.requests.out[id] = tombstone;
     self.pending.out--;
@@ -286,7 +308,7 @@ Operations.prototype.clear = function clear() {
         if (tombstone.timeHeapHandle) {
             tombstone.timeHeapHandle.cancel();
         }
-        tombstone.onTimeout(now);
+        tombstone.destroy(now);
     }
 };
 
@@ -328,6 +350,9 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 self.popOutReq(id);
             }
         } else if (op.isTombstone) {
+            var heap = self.connection.channel.timeHeap;
+            var expireTime = op.time + op.timeout;
+
             if (!op.operations) {
                 self.logger.warn('zombie tombstone', op.extendLogInfo({
                     direction: direction,
@@ -337,10 +362,14 @@ Operations.prototype._sweepOps = function _sweepOps(ops, direction) {
                 op.operations = null;
                 op.timeHeapHandle.cancel();
                 op.timeHeapHandle = null;
-            } else if (op.time + op.timeout < now) {
+            } else if (expireTime < now && heap.lastRun > expireTime) {
                 self.logger.warn('stale tombstone', op.extendLogInfo({
                     direction: direction,
-                    opKey: id
+                    opKey: id,
+                    now: now,
+                    staleDelta: op.time + op.timeout - now,
+                    expireTime: expireTime,
+                    heapLastRun: heap.lastRun
                 }));
                 delete ops[id];
                 op.operations = null;

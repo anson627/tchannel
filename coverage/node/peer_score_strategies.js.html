@@ -126,55 +126,55 @@
 <span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">1039</span>
+<span class="cline-any cline-yes">1042</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1039</span>
-<span class="cline-any cline-yes">1039</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">41368</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41368</span>
-<span class="cline-any cline-yes">41368</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41368</span>
-<span class="cline-any cline-yes">3683</span>
-<span class="cline-any cline-yes">37685</span>
-<span class="cline-any cline-yes">1662</span>
-<span class="cline-any cline-yes">36023</span>
-<span class="cline-any cline-yes">2451</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33572</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1042</span>
+<span class="cline-any cline-yes">1042</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1</span>
-<span class="cline-any cline-yes">34523</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">41485</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41485</span>
+<span class="cline-any cline-yes">41485</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41485</span>
+<span class="cline-any cline-yes">3752</span>
+<span class="cline-any cline-yes">37733</span>
+<span class="cline-any cline-yes">1671</span>
+<span class="cline-any cline-yes">36062</span>
+<span class="cline-any cline-yes">2464</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">33598</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
+<span class="cline-any cline-yes">34612</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34523</span>
-<span class="cline-any cline-yes">34523</span>
-<span class="cline-any cline-yes">34523</span>
-<span class="cline-any cline-yes">34523</span>
+<span class="cline-any cline-yes">34612</span>
+<span class="cline-any cline-yes">34612</span>
+<span class="cline-any cline-yes">34612</span>
+<span class="cline-any cline-yes">34612</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">505</span>
-<span class="cline-any cline-yes">505</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">506</span>
+<span class="cline-any cline-yes">506</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3809</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">30714</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3878</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30734</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Copyright (c) 2015 Uber Technologies, Inc.
@@ -242,7 +242,7 @@ PreferOutgoing.prototype.getScore = function getScore() {
     switch (tier) {
         case PreferOutgoing.ONLY_INCOMING:
             <span class="missing-if-branch" title="else path not taken" >E</span>if (!self.peer.channel.destroyed) {
-                self.peer.connect(true);
+                self.peer.connectTo();
             }
             /* falls through */
         case PreferOutgoing.UNCONNECTED:
@@ -258,7 +258,7 @@ PreferOutgoing.prototype.getScore = function getScore() {
 
 </div>
 <div class="footer">
-    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Aug 25 2015 13:57:33 GMT-0700 (PDT)</div>
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 02 2015 12:37:04 GMT-0700 (PDT)</div>
 </div>
 <script src="../prettify.js"></script>
 <script>
