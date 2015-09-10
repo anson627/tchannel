@@ -21,9 +21,11 @@
 'use strict';
 
 var assert = require('assert');
+var fs = require('fs');
+var path = require('path');
 var bufrw = require('bufrw');
 var Result = require('bufrw/result');
-var thriftify = require('thriftify');
+var thriftrw = require('thriftrw');
 
 var errors = require('../errors.js');
 
@@ -41,7 +43,10 @@ function TChannelAsThrift(opts) {
     assert(opts && typeof opts.source === 'string',
         'must pass source as an argument');
 
-    self.spec = thriftify.parseSpec(opts.source);
+    self.spec = new thriftrw.Thrift({
+        source: opts.source,
+        strict: opts.strict
+    });
 
     // Pulled off of things in `.register` and `.send` rather than passed in
     self.logger = null;
@@ -53,8 +58,31 @@ function TChannelAsThrift(opts) {
     self.logParseFailures = typeof logParseFailures === 'boolean' ?
         logParseFailures : true;
 
-    // only used in request()
     self.channel = opts.channel;
+
+    self.isHealthy = opts.isHealthy;
+    assert(!self.isHealthy || typeof self.isHealthy === 'function',
+        'isHealthy must be a function');
+    assert(!self.isHealthy || self.channel,
+        'channel must be provided with isHealthy');
+
+    if (self.isHealthy) {
+        fs.readFile(path.join(__dirname, 'meta.thrift'), 'utf8', registerHealthCheck);
+    }
+
+    function registerHealthCheck(err, source) {
+        if (err) {
+            self.channel.logger.error('failed to read meta.thrift file', {
+                error: err
+            });
+            return;
+        }
+
+        var metaSpec = new thriftrw.Thrift({
+            source: source
+        });
+        self.register(self.channel, 'Meta::health', self, health, metaSpec);
+    }
 }
 
 function TChannelThriftRequest(options) {
@@ -63,6 +91,21 @@ function TChannelThriftRequest(options) {
     self.channel = options.channel;
     self.reqOptions = options.reqOptions;
     self.tchannelThrift = options.tchannelThrift;
+}
+
+function health(self, req, head, body, callback) {
+    var status = self.isHealthy();
+    assert(status && typeof status.ok === 'boolean', 'status must have ok field');
+    assert(status && (status.ok || typeof status.message === 'string'),
+        'status.message must be provided when status.ok === false');
+
+    return callback(null, {
+        ok: true,
+        body: {
+            ok: status.ok,
+            message: status.message
+        }
+    });
 }
 
 TChannelThriftRequest.prototype.send =
@@ -88,7 +131,7 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
 };
 
 TChannelAsThrift.prototype.register =
-function register(channel, name, opts, handle) {
+function register(channel, name, opts, handle, spec) {
     var self = this;
 
     if (!self.logger) {
@@ -110,7 +153,8 @@ function register(channel, name, opts, handle) {
             head: inHeadBuffer,
             body: inBodyBuffer,
             endpoint: name,
-            direction: 'in.request'
+            direction: 'in.request',
+            spec: spec
         });
 
         if (parseResult.err) {
@@ -153,7 +197,8 @@ function register(channel, name, opts, handle) {
                 ok: thriftRes.ok,
                 typeName: thriftRes.typeName,
                 endpoint: name,
-                direction: 'out.response'
+                direction: 'out.response',
+                spec: spec
             });
 
             if (stringifyResult.err) {
@@ -235,22 +280,18 @@ function TChannelThriftResponse(response, parseResult) {
     self.head = parseResult.head;
     self.body = null;
     self.headers = response.headers;
-
-    if (response.ok) {
-        self.body = parseResult.body;
-    } else {
-        self.body = errors.ReconstructedError(parseResult.body);
-    }
+    self.body = parseResult.body;
 }
 
 TChannelAsThrift.prototype._parse = function parse(opts) {
     var self = this;
+    var spec = opts.spec || self.spec;
 
     var argsName = opts.endpoint + '_args';
-    var argsType = self.spec.getType(argsName);
+    var argsType = spec.getType(argsName);
 
     var returnName = opts.endpoint + '_result';
-    var resultType = self.spec.getType(returnName);
+    var resultType = spec.getType(returnName);
 
     var headRes = bufrw.fromBufferResult(HeaderRW, opts.head);
     if (headRes.err) {
@@ -275,9 +316,9 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
 
     var bodyRes;
     if (opts.direction === 'in.request') {
-        bodyRes = argsType.fromBuffer(opts.body);
+        bodyRes = argsType.fromBufferResult(opts.body);
     } else if (opts.direction === 'in.response') {
-        bodyRes = resultType.fromBuffer(opts.body);
+        bodyRes = resultType.fromBufferResult(opts.body);
 
         if (bodyRes.value && opts.ok) {
             bodyRes.value = bodyRes.value.success;
@@ -314,12 +355,13 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
 
 TChannelAsThrift.prototype._stringify = function stringify(opts) {
     var self = this;
+    var spec = opts.spec || self.spec;
 
     var argsName = opts.endpoint + '_args';
-    var argsType = self.spec.getType(argsName);
+    var argsType = spec.getType(argsName);
 
     var returnName = opts.endpoint + '_result';
-    var resultType = self.spec.getType(returnName);
+    var resultType = spec.getType(returnName);
 
     opts.head = opts.head || {};
 
@@ -343,7 +385,7 @@ TChannelAsThrift.prototype._stringify = function stringify(opts) {
 
     var bodyRes;
     if (opts.direction === 'out.request') {
-        bodyRes = argsType.toBuffer(opts.body);
+        bodyRes = argsType.toBufferResult(opts.body);
     } else if (opts.direction === 'out.response') {
         var thriftResult = {};
         if (!opts.ok) {
@@ -352,7 +394,7 @@ TChannelAsThrift.prototype._stringify = function stringify(opts) {
             thriftResult.success = opts.body;
         }
 
-        bodyRes = resultType.toBuffer(thriftResult);
+        bodyRes = resultType.toBufferResult(thriftResult);
     }
 
     if (bodyRes.err) {

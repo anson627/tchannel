@@ -86,12 +86,20 @@ send call requests and register call request handlers
 It can be passed options.
 
  - required `opts.source` The thrift idl as a string
+ - `opts.strict` defaults to true. When set to false you opt out
+    of strict IDL parsing.
  - `opts.logParseFailures` logParseFailures defaults to true. When
     it is set to true we will log parse failures to the logger using
     `logger.warn()`. If you do not want these log statements you
     can set the option to `false`
  - `opts.channel` The channel used to make requests on. This
-    option is required if you want to use the `.request()` method
+    option is required if you want to use the `.request()` method or
+    `opts.isHealthy` is passed in.
+ - `opts.isHealthy` The callback function used to return the
+   health check status of the service. The callback function should return
+   an object that contains 1) a required field of `ok` that can be `true` or
+   `false`; and 2) a field of `message` that indicates the reason for
+   current status. `message` is required when `ok` is `false`.
 
 ### `tchannelThrift.request(reqOpts).send(endpoint, head, body, cb)`
 

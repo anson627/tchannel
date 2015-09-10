@@ -83,13 +83,20 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
 }
 inherits(TChannelConnection, TChannelConnectionBase);
 
-TChannelConnection.prototype.extendLogInfo = function extendLogInfo(info) {
+TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled) {
     var self = this;
 
-    info.hostPort = self.channel.hostPort;
-    info.socketRemoteAddr = self.socketRemoteAddr;
-
-    return info;
+    // TODO: push down read machine concern into handler entirely;
+    // boundary should just be self.handler.handleChunk in
+    // onSocketChunk under setupSocket; then the switching logic
+    // moves wholly into a `self.handler.setLazyHandling(bool)`
+    if (enabled && self.mach.chunkRW !== v2.LazyFrame.RW) {
+        self.mach.chunkRW = v2.LazyFrame.RW;
+        self.handler.useLazyFrames(enabled);
+    } else if (!enabled && self.mach.chunkRW !== v2.Frame.RW) {
+        self.mach.chunkRW = v2.Frame.RW;
+        self.handler.useLazyFrames(enabled);
+    }
 };
 
 TChannelConnection.prototype.setupSocket = function setupSocket() {
@@ -139,6 +146,8 @@ function noop() {}
 
 TChannelConnection.prototype.setupHandler = function setupHandler() {
     var self = this;
+
+    self.setLazyHandling(self.channel.options.useLazyHandling);
 
     self.handler.write = function write(buf, done) {
         self.socket.write(buf, null, done);
@@ -506,16 +515,13 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
         });
     }
 
-    var logInfo = {
+    var logInfo = self.extendLogInfo({
         error: err,
-        remoteName: self.remoteName,
-        localName: self.channel.hostPort,
-        socketRemoteAddr: self.socketRemoteAddr,
         numInOps: inOpKeys.length,
         numOutOps: outOpKeys.length,
         inPending: pending.in,
         outPending: pending.out
-    };
+    });
 
     // requests that we've received we can delete, but these reqs may have started their
     //   own outgoing work, which is hard to cancel. By setting this.closing, we make sure
@@ -532,22 +538,18 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
         if (!req) {
             return;
         }
+        req.emitError(makeReqError(req));
+    });
 
-        var info = req.extendLogInfo({
-            socketRemoteAddr: self.socketRemoteAddr,
-            direction: self.direction,
-            remoteName: self.remoteName
-        });
-
+    function makeReqError(req) {
         var reqErr = err;
         if (reqErr.type === 'tchannel.socket-local-closed') {
-            reqErr = errors.TChannelLocalResetError(reqErr, info);
+            reqErr = errors.TChannelLocalResetError(reqErr);
         } else {
-            reqErr = errors.TChannelConnectionResetError(reqErr, info);
+            reqErr = errors.TChannelConnectionResetError(reqErr);
         }
-
-        req.emitError(reqErr);
-    });
+        return req.extendLogInfo(self.extendLogInfo(reqErr));
+    }
 
     self.ops.clear();
 

@@ -50,6 +50,7 @@ var TChannelServices = require('./services');
 var TChannelStatsd = require('./lib/statsd');
 var RetryFlags = require('./retry-flags.js');
 var TimeHeap = require('./time_heap');
+var CountedReadySignal = require('ready-signal/counted');
 
 var TracingAgent = require('./trace/agent');
 
@@ -119,6 +120,7 @@ function TChannel(options) {
     // self.connectionsBytesRcvdStat = self.defineCounter('connections.bytes-recvd');
 
     self.options = extend({
+        useLazyHandling: false,
         timeoutCheckInterval: 100,
         timeoutFuzz: 100,
         connectionStalePeriod: CONN_STALE_PERIOD,
@@ -135,7 +137,7 @@ function TChannel(options) {
     self.requireCn = self.options.requireCn;
     self.emitConnectionMetrics =
         typeof self.options.emitConnectionMetrics === 'boolean' ?
-        self.options.emitConnectionMetrics : true;
+        self.options.emitConnectionMetrics : false;
     self.choosePeerWithHeap = self.options.choosePeerWithHeap || false;
 
     // required: 'app'
@@ -219,6 +221,11 @@ function TChannel(options) {
     self.listened = false;
     self.listening = false;
     self.destroyed = false;
+    self.draining = false;
+
+    // set when draining (e.g. graceful shutdown)
+    self.drainReason = '';
+    self.drainExempt = null;
 
     var trace = typeof self.options.trace === 'boolean' ?
         self.options.trace : true;
@@ -262,6 +269,77 @@ function TChannel(options) {
     }
 }
 inherits(TChannel, StatEmitter);
+
+TChannel.prototype.eachConnection = function eachConnection(each) {
+    var self = this;
+
+    var peers = self.peers.values();
+    var i;
+    for (i = 0; i < peers.length; i++) {
+        var peer = peers[i];
+        for (var j = 0; j < peer.connections.length; j++) {
+            each(peer.connections[j]);
+        }
+    }
+
+    if (self.serverConnections) {
+        var connKeys = Object.keys(self.serverConnections);
+        for (i = 0; i < connKeys.length; i++) {
+            each(self.serverConnections[connKeys[i]]);
+        }
+    }
+};
+
+TChannel.prototype.setLazyHandling = function setLazyHandling(enabled) {
+    var self = this;
+
+    if (self.topChannel) {
+        self.topChannel.setLazyHandling(enabled);
+        return;
+    }
+
+    self.options.useLazyHandling = enabled;
+    self.eachConnection(updateEachConn);
+
+    function updateEachConn(conn) {
+        conn.setLazyHandling(enabled);
+    }
+};
+
+TChannel.prototype.drain = function drain(reason, exempt, callback) {
+    var self = this;
+
+    // TODO: we could do this by defaulting and/or forcing you into an
+    // exemption function that exempting anything not matching the given sub
+    // channel's service name; however there are many other complications to
+    // consider to implement sub channel draining, so for now:
+    assert(!self.topChannel, 'sub channel draining not supported');
+    assert(!self.draining, 'channel already draining');
+
+    if (callback === undefined) {
+        callback = exempt;
+        exempt = null;
+    }
+
+    self.draining = true;
+    self.drainReason = reason;
+    self.drainExempt = exempt;
+
+    var drained = CountedReadySignal(1);
+    drained(callback);
+    self.eachConnection(drainEachConn);
+    process.nextTick(drained.signal);
+    self.logger.info('draining channel', {
+        hostPort: self.hostPort,
+        reason: self.drainReason,
+        count: drained.counter
+    });
+
+    function drainEachConn(conn) {
+        drained.counter++;
+        conn.drain(self.drainReason, self.drainExempt, drained.signal);
+    }
+};
 
 TChannel.prototype.getServer = function getServer() {
     var self = this;
@@ -325,6 +403,10 @@ TChannel.prototype.onServerSocketConnection = function onServerSocketConnection(
     var socketRemoteAddr = sock.remoteAddress + ':' + sock.remotePort;
     var chan = self.topChannel || self;
     var conn = new TChannelConnection(chan, sock, 'in', socketRemoteAddr);
+
+    if (self.draining) {
+        conn.drain(self.drainReason, self.drainExempt, null);
+    }
 
     conn.errorEvent.on(onConnectionError);
 
@@ -484,10 +566,14 @@ TChannel.prototype.register = function register(name, options, handler) {
             throw errors.TopLevelRegisterError();
 
         default:
-            throw errors.InvalidHandlerForRegister({
-                handlerType: handlerType,
-                handler: self.handler
-            });
+            if (typeof self.handler.register === 'function') {
+                self.handler.register(name, options, handler);
+            } else {
+                throw errors.InvalidHandlerForRegister({
+                    handlerType: handlerType,
+                    handler: self.handler
+                });
+            }
     }
 };
 

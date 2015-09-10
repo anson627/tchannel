@@ -29,6 +29,7 @@ var TChannelConnection = require('./connection');
 var errors = require('./errors');
 var Request = require('./request');
 var PreferOutgoing = require('./peer_score_strategies.js').PreferOutgoing;
+var NoPreference = require('./peer_score_strategies.js').NoPreference;
 
 var DEFAULT_REPORT_INTERVAL = 1000;
 
@@ -62,7 +63,13 @@ function TChannelPeer(channel, hostPort, options) {
         );
     }
 
-    self.setScoreStrategy(PreferOutgoing);
+    self.preferOutgoing = self.options.preferOutgoing;
+
+    if (self.preferOutgoing) {
+        self.setScoreStrategy(PreferOutgoing);
+    } else {
+        self.setScoreStrategy(NoPreference);
+    }
 
     function onReport() {
         if (!self.hostPort) {
@@ -355,6 +362,11 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     var self = this;
     var chan = self.channel.topChannel || self.channel;
     var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
+
+    if (chan.draining) {
+        conn.drain(chan.drainReason, chan.drainExempt, null);
+    }
+
     self.allocConnectionEvent.emit(self, conn);
     return conn;
 };

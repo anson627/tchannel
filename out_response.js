@@ -69,6 +69,7 @@ TChannelOutResponse.prototype.type = 'tchannel.outgoing-response';
 TChannelOutResponse.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
+    info.responseId = self.id;
     info.responseType = self.type;
     info.responseState = States.describe(self.state);
     info.responseOk = self.ok;
@@ -77,6 +78,11 @@ TChannelOutResponse.prototype.extendLogInfo = function extendLogInfo(info) {
     info.responseErrorMessage = self.message;
     info.responseStart = self.start;
     info.responseEnd = self.end;
+    info.responseHasArg3 = self.arg3 !== null && self.arg3 !== undefined;
+
+    if (self.inreq) {
+        info = self.inreq.extendLogInfo(info);
+    }
 
     return info;
 };
@@ -189,9 +195,19 @@ TChannelOutResponse.prototype.sendCallResponseContFrame = function sendCallRespo
 
 TChannelOutResponse.prototype.sendError = function sendError(codeString, message) {
     var self = this;
+
+    if (self.inreq.connection && // because selfpeer/connection
+        self.inreq.connection.closing) {
+        self.logger.info('ignoring outresponse.sendError on a closed connection', {
+            codeString: codeString,
+            errorMessage: message
+        });
+        return;
+    }
+
     if (self.state === States.Done || self.state === States.Error) {
         self.errorEvent.emit(self, errors.ResponseAlreadyDone({
-            attempted: 'send error frame: ' + codeString + ': ' + message,
+            attempted: 'error frame',
             currentState: self.state,
             method: 'sendError',
             codeString: codeString,
@@ -222,11 +238,7 @@ TChannelOutResponse.prototype.emitFinish = function emitFinish() {
 
     if (self.end) {
         self.logger.warn('out response double emitFinish', self.extendLogInfo({
-            now: now,
-            serviceName: self.inreq.serviceName,
-            cn: self.inreq.headers.cn,
-            endpoint: String(self.inreq.arg1),
-            remoteAddr: self.inreq.connection.socketRemoteAddr
+            now: now
         }));
         return;
     }
@@ -292,20 +304,18 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
 
     /* send calls after finish() should be swallowed */
     if (self.end) {
-        var logOptions = self.extendLogInfo({
-            serviceName: self.inreq.serviceName,
-            cn: self.inreq.headers.cn,
-            endpoint: self.inreq.endpoint,
-            remoteAddr: self.inreq.remoteAddr,
-            hasResponse: !!self.arg3
-        });
+        var inreqErrClass = self.inreq &&
+                            self.inreq.err &&
+                            errors.classify(self.inreq.err);
 
-        if (self.inreq && self.inreq.timedOut) {
-            self.logger.info('OutResponse.send() after inreq timed out', logOptions);
-        } else {
-            self.logger.warn('OutResponse called send() after end', logOptions);
+        switch (inreqErrClass) {
+            case 'Timeout':
+                self.logger.info('OutResponse.send() after inreq timed out', self.extendLogInfo({}));
+                break;
+            default:
+                self.logger.warn('OutResponse called send() after end', self.extendLogInfo({}));
         }
-        return;
+        return self;
     }
 
     self.arg2 = res1;
@@ -337,7 +347,14 @@ TChannelOutResponse.prototype.send = function send(res1, res2) {
         ));
     }
 
-    self.sendCallResponseFrame([self.arg1, res1, res2], true);
+    // TODO: may be spam, consider dropping
+    if (self.inreq.connection && // because selfpeer/connection
+        self.inreq.connection.closing) {
+        self.logger.info('ignoring outresponse.send on a closed connection', self.extendLogInfo({}));
+    } else {
+        self.sendCallResponseFrame([self.arg1, res1, res2], true);
+    }
+
     self.emitFinish();
 
     return self;

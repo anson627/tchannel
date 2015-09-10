@@ -31,7 +31,8 @@ var timers = TimeMock(Date.now());
 allocCluster.test('emits stats on call success', {
     numPeers: 2,
     channelOptions: {
-        timers: timers
+        timers: timers,
+        emitConnectionMetrics: true
     }
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
@@ -106,7 +107,7 @@ allocCluster.test('emits stats on call success', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-sent.localhost',
+            name: 'tchannel.connections.bytes-sent.127-0-0-1',
             value: null,
             delta: 109,
             time: null
@@ -118,7 +119,7 @@ allocCluster.test('emits stats on call success', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-recvd.localhost',
+            name: 'tchannel.connections.bytes-recvd.127-0-0-1',
             value: null,
             delta: 67,
             time: null
@@ -149,7 +150,8 @@ allocCluster.test('emits stats on call success', {
 allocCluster.test('emits stats on p2p call success', {
     numPeers: 2,
     channelOptions: {
-        timers: timers
+        timers: timers,
+        emitConnectionMetrics: true
     }
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
@@ -231,7 +233,7 @@ allocCluster.test('emits stats on p2p call success', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-sent.localhost',
+            name: 'tchannel.connections.bytes-sent.127-0-0-1',
             value: null,
             delta: 109,
             time: null
@@ -243,7 +245,7 @@ allocCluster.test('emits stats on p2p call success', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-recvd.localhost',
+            name: 'tchannel.connections.bytes-recvd.127-0-0-1',
             value: null,
             delta: 67,
             time: null
@@ -366,7 +368,8 @@ allocCluster.test('emits stats with no connection metrics', {
 allocCluster.test('emits stats on call failure', {
     numPeers: 2,
     channelOptions: {
-        timers: timers
+        timers: timers,
+        emitConnectionMetrics: true
     }
 }, function t(cluster, assert) {
     var server = cluster.channels[0];
@@ -441,7 +444,7 @@ allocCluster.test('emits stats on call failure', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-sent.localhost',
+            name: 'tchannel.connections.bytes-sent.127-0-0-1',
             value: null,
             delta: 109,
             time: null
@@ -453,7 +456,7 @@ allocCluster.test('emits stats on call failure', {
             time: null
         }, {
             type: 'c',
-            name: 'tchannel.connections.bytes-recvd.localhost',
+            name: 'tchannel.connections.bytes-recvd.127-0-0-1',
             value: null,
             delta: 66,
             time: null

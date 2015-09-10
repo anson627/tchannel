@@ -21,6 +21,8 @@
 'use strict';
 
 var errors = require('./errors.js');
+var inherits = require('util').inherits;
+var EventEmitter = require('./lib/event_emitter');
 
 var TOMBSTONE_TTL_OFFSET = 500;
 
@@ -28,6 +30,11 @@ module.exports = Operations;
 
 function Operations(opts) {
     var self = this;
+
+    EventEmitter.call(self);
+    self.draining = false;
+    self.drainExempt = null;
+    self.drainEvent = self.defineEvent('drain');
 
     self.timers = opts.timers;
     self.logger = opts.logger;
@@ -47,6 +54,17 @@ function Operations(opts) {
     };
     self.lastTimeoutTime = 0;
 }
+inherits(Operations, EventEmitter);
+
+Operations.prototype.extendLogInfo = function extendLogInfo(info) {
+    var self = this;
+
+    if (self.connection) {
+        info = self.connection.extendLogInfo(info);
+    }
+
+    return info;
+};
 
 function OperationTombstone(operations, id, time, req) {
     var self = this;
@@ -68,8 +86,6 @@ function OperationTombstone(operations, id, time, req) {
 OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
-    var conn = self.operations && self.operations.connection;
-
     info.id = self.id;
     info.serviceName = self.serviceName;
     info.callerName = self.callerName;
@@ -79,15 +95,14 @@ OperationTombstone.prototype.extendLogInfo = function extendLogInfo(info) {
     info.heapCanceled = self.timeHeapHandle && !self.timeHeapHandle.item;
     info.heapExpireTime = self.timeHeapHandle && self.timeHeapHandle.expireTime;
     info.heapAmItem = self.timeHeapHandle && self.timeHeapHandle.item === self;
-    info.hostPort = conn && conn.channel.hostPort;
-    info.socketRemoteAddr = conn && conn.socketRemoteAddr;
-    info.remoteName = conn && conn.remoteName;
-    info.connClosing = conn && conn.closing;
 
-    var other = self.operations && self.operations.requests.out[self.id];
-    if (self !== other) {
-        info.otherType = typeof other;
-        info.otherConstructorName = other && other.constructor && other.constructor.name;
+    if (self.operations) {
+        info = self.operations.extendLogInfo(info);
+        var other = self.operations.requests.out[self.id];
+        if (self !== other) {
+            info.otherType = typeof other;
+            info.otherConstructorName = other && other.constructor && other.constructor.name;
+        }
     }
 
     return info;
@@ -208,6 +223,46 @@ Operations.prototype.addInReq = function addInReq(req) {
     return req;
 };
 
+Operations.prototype.hasDrained = function hasDrained() {
+    var self = this;
+
+    if (self.pending.in === 0 &&
+        self.pending.out === 0) {
+        return true;
+    } else if (self._isCollDrained(self.requests.in) &&
+               self._isCollDrained(self.requests.out)) {
+        return true;
+    }
+
+    return false;
+};
+
+Operations.prototype.checkDrained = function checkDrained() {
+    var self = this;
+
+    if (self.hasDrained()) {
+        self.drainEvent.emit(self);
+        self.drainEvent.removeAllListeners();
+    }
+};
+
+Operations.prototype._isCollDrained = function _isCollDrained(coll) {
+    var self = this;
+
+    /* jshint forin:false */
+    for (var id in coll) {
+        var op = coll[id];
+        if (!(op instanceof OperationTombstone) &&
+            !op.drained &&
+            !(self.drainExempt && self.drainExempt(op))
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 Operations.prototype.popOutReq = function popOutReq(id, context) {
     var self = this;
 
@@ -231,13 +286,15 @@ Operations.prototype.popOutReq = function popOutReq(id, context) {
         });
     }
 
-    var now = self.timers.now();
-    var tombstone = new OperationTombstone(self, id, now, req);
-    req.operations = null;
+    var tombstone = new OperationTombstone(self, id, self.timers.now(), req);
     self.requests.out[id] = tombstone;
-    self.pending.out--;
+    tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, tombstone.time);
 
-    tombstone.timeHeapHandle = self.connection.channel.timeHeap.update(tombstone, now);
+    req.operations = null;
+    self.pending.out--;
+    if (self.draining) {
+        self.checkDrained();
+    }
 
     return req;
 };
@@ -287,6 +344,9 @@ Operations.prototype.popInReq = function popInReq(id) {
 
     delete self.requests.in[id];
     self.pending.in--;
+    if (self.draining) {
+        self.checkDrained();
+    }
 
     return req;
 };

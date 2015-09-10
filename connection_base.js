@@ -40,6 +40,10 @@ function TChannelConnectionBase(channel, direction, socketRemoteAddr) {
     self.timedOutEvent = self.defineEvent('timedOut');
     self.pingResponseEvent = self.defineEvent('pingResonse');
 
+    self.draining = false;
+    self.drainReason = '';
+    self.drainExempt = null;
+
     self.closing = false;
     self.closeError = null;
     self.closeEvent = self.defineEvent('close');
@@ -68,6 +72,44 @@ function TChannelConnectionBase(channel, direction, socketRemoteAddr) {
 }
 inherits(TChannelConnectionBase, EventEmitter);
 
+TChannelConnectionBase.prototype.extendLogInfo = function extendLogInfo(info) {
+    var self = this;
+
+    info.hostPort = self.channel.hostPort;
+    info.socketRemoteAddr = self.socketRemoteAddr;
+    info.remoteName = self.remoteName;
+    info.connClosing = self.closing;
+
+    return info;
+};
+
+TChannelConnectionBase.prototype.setLazyHandling = function setLazyHandling() {
+    // noop
+};
+
+TChannelConnectionBase.prototype.drain =
+function drain(reason, exempt, callback) {
+    var self = this;
+
+    if (callback === undefined) {
+        callback = exempt;
+        exempt = null;
+    }
+
+    self.draining = true;
+    self.drainReason = reason;
+    self.drainExempt = exempt || null;
+    self.ops.draining = true;
+    self.ops.drainExempt = self.drainExempt;
+    if (callback) {
+        if (self.ops.hasDrained()) {
+            process.nextTick(callback);
+        } else {
+            self.ops.drainEvent.on(callback);
+        }
+    }
+};
+
 // create a request
 TChannelConnectionBase.prototype.request =
 function connBaseRequest(options) {
@@ -84,6 +126,12 @@ function connBaseRequest(options) {
     // options.checksumType = options.checksum;
 
     var req = self.buildOutRequest(options);
+    if (self.draining && (
+            !self.drainExempt || !self.drainExempt(req)
+        )) {
+        req.drained = true;
+        req.drainReason = self.drainReason;
+    }
     self.ops.addOutReq(req);
     req.peer.invalidateScore();
     return req;
@@ -94,6 +142,14 @@ TChannelConnectionBase.prototype.handleCallRequest = function handleCallRequest(
 
     req.remoteAddr = self.remoteName;
     self.ops.addInReq(req);
+
+    if (self.draining && (
+            !self.drainExempt || !self.drainExempt(req)
+        )) {
+        var res = self.buildResponse(req, {});
+        res.sendError('Declined', 'connection draining: ' + self.drainReason);
+        return;
+    }
 
     process.nextTick(runHandler);
 
@@ -193,8 +249,11 @@ TChannelConnectionBase.prototype.onResponseError =
 function onResponseError(err, req) {
     var self = this;
 
+    var reqTimedOut = req.err &&
+                      errors.classify(req.err) === 'Timeout';
+
     // don't log if we get further timeout errors for already timed out response
-    if (req.timedOut && errors.classify(err) === 'Timeout') {
+    if (reqTimedOut && errors.classify(err) === 'Timeout') {
         return;
     }
 
@@ -216,7 +275,7 @@ function onResponseError(err, req) {
 
     if ((err.type === 'tchannel.response-already-started' ||
         err.type === 'tchannel.response-already-done') &&
-        req.timedOut
+        reqTimedOut
     ) {
         self.logger.info(
             'error for timed out outgoing response', loggingOptions
@@ -233,14 +292,20 @@ TChannelConnectionBase.prototype.onReqDone = function onReqDone(req) {
 
     var inreq = self.ops.popInReq(req.id);
 
-    // incoming req that timed out are already cleaned up
-    if (inreq !== req && !req.timedOut) {
-        self.logger.warn('mismatched onReqDone callback', {
-            hostPort: self.channel.hostPort,
-            hasInReq: inreq !== undefined,
-            id: req.id
-        });
+    if (inreq === req) {
+        return;
     }
+
+    // we popped something else, or there was nothing to pop
+
+    // incoming req that timed out are already cleaned up
+    if (req.err && errors.classify(req.err) === 'Timeout') {
+        return;
+    }
+
+    self.logger.warn('mismatched conn.onReqDone', self.extendLogInfo(req.extendLogInfo({
+        hasInReq: !!inreq
+    })));
 };
 
 module.exports = TChannelConnectionBase;

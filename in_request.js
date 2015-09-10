@@ -57,8 +57,8 @@ function TChannelInRequest(id, options) {
     self.forwardTrace = false;
     self.span = null;
     self.start = self.channel.timers.now();
-    self.timedOut = false;
     self.res = null;
+    self.err = null;
 
     if (options.tracer) {
         self.setupTracing(options);
@@ -77,15 +77,22 @@ TChannelInRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     // - tracing id?
     // - other?
 
+    info.requestId = self.id;
     info.requestType = self.type;
     info.requestState = States.describe(self.state);
     info.requestRemoteAddr = self.remoteAddr;
     info.serviceName = self.serviceName;
+    info.callerName = self.headers.cn;
+    info.requestErr = self.err;
 
     if (self.endpoint !== null) {
         info.requestArg1 = self.endpoint;
     } else {
         info.requestArg1 = String(self.arg1);
+    }
+
+    if (self.connection) {
+        info = self.connection.extendLogInfo(info);
     }
 
     return info;
@@ -134,6 +141,13 @@ TChannelInRequest.prototype.handleFrame = function handleFrame(parts, isLast) {
     return null;
 };
 
+TChannelInRequest.prototype.emitError = function emitError(err) {
+    var self = this;
+
+    self.err = err;
+    self.errorEvent.emit(self, err);
+};
+
 TChannelInRequest.prototype.emitFinish = function emitFinish() {
     var self = this;
 
@@ -143,26 +157,26 @@ TChannelInRequest.prototype.emitFinish = function emitFinish() {
 
 TChannelInRequest.prototype.onTimeout = function onTimeout(now) {
     var self = this;
+    var timeoutError;
 
     if (!self.res || self.res.state === States.Initial) {
         // TODO: send an error frame response?
         // TODO: emit error on self.res instead / in addition to?
         // TODO: should cancel any pending handler
-        self.timedOut = true;
         if (self.operations) {
             self.operations.popInReq(self.id);
         }
+        timeoutError = errors.RequestTimeoutError({
+            id: self.id,
+            start: self.start,
+            elapsed: now - self.start,
+            timeout: self.timeout
+        });
         process.nextTick(deferInReqTimeoutErrorEmit);
     }
 
     function deferInReqTimeoutErrorEmit() {
-        var elapsed = now - self.start;
-        self.errorEvent.emit(self, errors.RequestTimeoutError({
-            id: self.id,
-            start: self.start,
-            elapsed: elapsed,
-            timeout: self.timeout
-        }));
+        self.emitError(timeoutError);
     }
 };
 

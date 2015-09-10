@@ -76,7 +76,10 @@ function TChannelOutRequest(id, options) {
     self.span = null;
     self.err = null;
     self.res = null;
-    self.timedOut = false;
+
+    // set for requests created on draining connections
+    self.drained = false;
+    self.drainReason = '';
 
     if (options.channel.tracer && !self.forwardTrace) {
         // new span with new ids
@@ -192,21 +195,6 @@ function emitResponseStat(res) {
     }
 };
 
-function emitOutboundCallsSuccess(request) {
-    request.channel.emitFastStat(request.channel.buildStat(
-        'tchannel.outbound.calls.success',
-        'counter',
-        1,
-        new stat.OutboundCallsSuccessTags(
-            request.serviceName,
-            request.headers.cn,
-            request.endpoint
-        )
-    ));
-}
-
-
-
 TChannelOutRequest.prototype.emitPerAttemptResponseStat =
 function emitPerAttemptResponseStat(res) {
     var self = this;
@@ -229,7 +217,6 @@ function emitPerAttemptResponseStat(res) {
         emitOutboundCallsSuccess(self);
     }
 };
-
 
 TChannelOutRequest.prototype.emitPerAttemptLatency =
 function emitPerAttemptLatency() {
@@ -297,10 +284,12 @@ TChannelOutRequest.prototype.emitError = function emitError(err) {
 TChannelOutRequest.prototype.extendLogInfo = function extendLogInfo(info) {
     var self = this;
 
+    info.requestId = self.id;
     info.requestType = self.type;
     info.requestState = States.describe(self.state);
     info.requestRemoteAddr = self.remoteAddr;
     info.serviceName = self.serviceName;
+    info.requestErr = self.err;
 
     if (self.endpoint !== null) {
         info.requestArg1 = self.endpoint;
@@ -340,6 +329,14 @@ TChannelOutRequest.prototype.emitResponse = function emitResponse(res) {
 
 TChannelOutRequest.prototype.sendParts = function sendParts(parts, isLast) {
     var self = this;
+
+    if (self.drained) {
+        self.emitError(errors.RequestDrained({
+            reason: self.drainReason
+        }));
+        return;
+    }
+
     switch (self.state) {
         case States.Initial:
             self.sendCallRequestFrame(parts, isLast);
@@ -411,6 +408,13 @@ TChannelOutRequest.prototype.sendCallRequestContFrame = function sendCallRequest
 TChannelOutRequest.prototype.sendArg1 = function sendArg1(arg1) {
     var self = this;
 
+    if (self.drained) {
+        self.emitError(errors.RequestDrained({
+            reason: self.drainReason
+        }));
+        return;
+    }
+
     self.arg1 = arg1;
     self.endpoint = String(arg1);
     if (self.span) {
@@ -423,6 +427,17 @@ TChannelOutRequest.prototype.sendArg1 = function sendArg1(arg1) {
 TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
     var self = this;
 
+    if (callback) {
+        self.hookupCallback(callback);
+    }
+
+    if (self.drained) {
+        self.emitError(errors.RequestDrained({
+            reason: self.drainReason
+        }));
+        return;
+    }
+
     self.sendArg1(arg1);
 
     if (self.span) {
@@ -432,10 +447,6 @@ TChannelOutRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
 
     if (self.logical === false && self.retryCount === 0) {
         self.emitOutboundCallsSent();
-    }
-
-    if (callback) {
-        self.hookupCallback(callback);
     }
 
     self.arg2 = arg2;
@@ -463,7 +474,7 @@ function emitOutboundCallsSent() {
 };
 
 TChannelOutRequest.prototype.hookupStreamCallback =
-function hookupCallback(callback) {
+function hookupStreamCallback(callback) {
     var self = this;
     var called = false;
 
@@ -485,8 +496,10 @@ function hookupCallback(callback) {
     return self;
 };
 
-TChannelOutRequest.prototype.hookupCallback = function hookupCallback(callback) {
+TChannelOutRequest.prototype.hookupCallback =
+function hookupCallback(callback) {
     var self = this;
+
     if (callback.canStream) {
         return self.hookupStreamCallback(callback);
     }
@@ -522,6 +535,7 @@ TChannelOutRequest.prototype.hookupCallback = function hookupCallback(callback) 
 
 TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
     var self = this;
+    var timeoutError;
 
     if (self.err) {
         self.channel.logger.warn('unexpected onTimeout for errored out request', {
@@ -538,7 +552,13 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
     }
 
     if (!self.res || self.res.state === States.Initial) {
-        self.timedOut = true;
+        timeoutError = errors.RequestTimeoutError({
+            id: self.id,
+            start: self.start,
+            elapsed: now - self.start,
+            logical: self.logical,
+            timeout: self.timeout
+        });
         if (self.operations) {
             self.operations.checkLastTimeoutTime(now);
             self.operations.popOutReq(self.id);
@@ -548,13 +568,19 @@ TChannelOutRequest.prototype.onTimeout = function onTimeout(now) {
     }
 
     function deferOutReqTimeoutErrorEmit() {
-        var elapsed = now - self.start;
-        self.emitError(errors.RequestTimeoutError({
-            id: self.id,
-            start: self.start,
-            elapsed: elapsed,
-            logical: self.logical,
-            timeout: self.timeout
-        }));
+        self.emitError(timeoutError);
     }
 };
+
+function emitOutboundCallsSuccess(request) {
+    request.channel.emitFastStat(request.channel.buildStat(
+        'tchannel.outbound.calls.success',
+        'counter',
+        1,
+        new stat.OutboundCallsSuccessTags(
+            request.serviceName,
+            request.headers.cn,
+            request.endpoint
+        )
+    ));
+}
