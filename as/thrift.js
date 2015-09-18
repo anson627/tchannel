@@ -48,8 +48,7 @@ function TChannelAsThrift(opts) {
         strict: opts.strict
     });
 
-    // Pulled off of things in `.register` and `.send` rather than passed in
-    self.logger = null;
+    self.logger = opts.logger;
 
     var bossMode = opts && opts.bossMode;
     self.bossMode = typeof bossMode === 'boolean' ? bossMode : false;
@@ -78,10 +77,12 @@ function TChannelAsThrift(opts) {
             return;
         }
 
+        self.thriftSource = opts.source;
         var metaSpec = new thriftrw.Thrift({
             source: source
         });
         self.register(self.channel, 'Meta::health', self, health, metaSpec);
+        self.register(self.channel, 'Meta::thriftIDL', self, thriftIDL, metaSpec);
     }
 }
 
@@ -108,6 +109,13 @@ function health(self, req, head, body, callback) {
     });
 }
 
+function thriftIDL(self, req, head, body, callback) {
+    return callback(null, {
+        ok: true,
+        body: self.thriftSource
+    });
+}
+
 TChannelThriftRequest.prototype.send =
 function send(endpoint, head, body, callback) {
     var self = this;
@@ -120,6 +128,10 @@ TChannelAsThrift.prototype.request = function request(reqOptions) {
     var self = this;
 
     assert(self.channel, 'channel is required for thrift.request()');
+    assert(reqOptions &&
+        reqOptions.type !== 'tchannel.request' &&
+        reqOptions.type !== 'tchannel.outgoing-request',
+        'invalid reqOptions to TChannelAsThrift.request');
 
     var req = new TChannelThriftRequest({
         channel: self.channel,
@@ -281,6 +293,7 @@ function TChannelThriftResponse(response, parseResult) {
     self.body = null;
     self.headers = response.headers;
     self.body = parseResult.body;
+    self.typeName = parseResult.typeName;
 }
 
 TChannelAsThrift.prototype._parse = function parse(opts) {
@@ -315,6 +328,7 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
     }
 
     var bodyRes;
+    var typeName;
     if (opts.direction === 'in.request') {
         bodyRes = argsType.fromBufferResult(opts.body);
     } else if (opts.direction === 'in.response') {
@@ -323,7 +337,8 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
         if (bodyRes.value && opts.ok) {
             bodyRes.value = bodyRes.value.success;
         } else if (bodyRes.value && !opts.ok) {
-            bodyRes.value = onlyProperty(bodyRes.value);
+            typeName = onlyKey(bodyRes.value);
+            bodyRes.value = bodyRes.value[typeName];
         }
     }
 
@@ -349,7 +364,8 @@ TChannelAsThrift.prototype._parse = function parse(opts) {
 
     return new Result(null, {
         head: headRes.value,
-        body: bodyRes.value
+        body: bodyRes.value,
+        typeName: typeName
     });
 };
 
@@ -421,10 +437,10 @@ TChannelAsThrift.prototype._stringify = function stringify(opts) {
 };
 
 // TODO proper Thriftify result union that reifies as the selected field.
-function onlyProperty(object) {
+function onlyKey(object) {
     for (var name in object) {
         if (object[name] !== null) {
-            return object[name];
+            return name;
         }
     }
 }

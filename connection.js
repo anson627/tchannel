@@ -69,7 +69,8 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
         requireCn: self.channel.requireCn,
         tracer: self.tracer,
         processName: self.options.processName,
-        connection: self
+        connection: self,
+        handleCallLazily: handleCallLazily
     };
 
     // jshint forin:true
@@ -80,6 +81,10 @@ function TChannelConnection(channel, socket, direction, socketRemoteAddr) {
     self.setupSocket();
     self.setupHandler();
     self.start();
+
+    function handleCallLazily(frame) {
+        return self.handleCallLazily(frame);
+    }
 }
 inherits(TChannelConnection, TChannelConnectionBase);
 
@@ -560,7 +565,6 @@ TChannelConnection.prototype.resetAll = function resetAll(err) {
         self.logger.warn('resetting connection', logInfo);
         self.errorEvent.emit(self, err);
     } else if (
-        err.type !== 'tchannel.socket-closed' &&
         err.type !== 'tchannel.socket-local-closed'
     ) {
         logInfo.error = extend(err);
@@ -583,7 +587,7 @@ InitOperation.prototype.onTimeout = function onTimeout(now) {
     var self = this;
 
     // noop if identify succeeded
-    if (self.connection.remoteName) {
+    if (self.connection.remoteName || self.connection.closing) {
         return;
     }
 
@@ -598,6 +602,21 @@ InitOperation.prototype.onTimeout = function onTimeout(now) {
         error: err
     }));
     self.connection.resetAll(err);
+};
+
+TChannelConnection.prototype.sendLazyErrorFrame =
+function sendLazyErrorFrame(reqFrame, codeString, message) {
+    var self = this;
+
+    var fakeR = {
+        id: reqFrame.id,
+        tracing: null
+    };
+    var res = reqFrame.bodyRW.lazy.readService(reqFrame);
+    if (!res.err) {
+        fakeR.tracing = res.value;
+    }
+    self.handler.sendErrorFrame(fakeR, codeString, message);
 };
 
 module.exports = TChannelConnection;
