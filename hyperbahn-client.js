@@ -89,6 +89,7 @@ function HyperbahnClient(options) {
 
     EventEmitter.call(this);
 
+    assert(options && options.tchannel, 'Must pass in a tchannel');
     assert(options && options.tchannel && !options.tchannel.topChannel,
         'Must pass in top level tchannel');
     assert(options.tchannel.tracer, 'Top channel must have trace enabled');
@@ -173,6 +174,26 @@ HyperbahnClient.prototype.setReportTracing = function setReportTracing(bool) {
     var self = this;
 
     self.reportTracing = bool;
+};
+
+HyperbahnClient.prototype.getThriftSync =
+function getThriftSync(options) {
+    var self = this;
+
+    assert(options && options.serviceName, 'must pass serviceName');
+    assert(options && options.thriftFile, 'must pass thriftFile');
+
+    var channel = self.getClientChannel(options);
+    var thriftSource = fs.readFileSync(options.thriftFile, 'utf8');
+
+    return channel.TChannelAsThrift({
+        source: thriftSource,
+        strict: options.strict,
+        logger: options.logger,
+        bossMode: options.bossMode,
+        channel: channel,
+        isHealthy: options.isHealthy
+    });
 };
 
 // Gets the subchannel for hitting a particular service.
@@ -380,8 +401,6 @@ function unadvertise(opts) {
     timers.clearTimeout(self._advertisementTimer);
     timers.clearTimeout(self.advertisementTimeoutTimer);
     self.latestAdvertisementResult = null;
-    self.state = States.UNADVERTISED;
-    self.emit('unadvertised');
     function unadvertiseInternalCb(error, result) {
         if (error) {
             self.logger.warn('HyperbahnClient: unadvertisement failure', {
@@ -391,6 +410,8 @@ function unadvertise(opts) {
             });
             return;
         }
+        self.state = States.UNADVERTISED;
+        self.emit('unadvertised');
     }
 };
 

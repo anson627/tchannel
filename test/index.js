@@ -28,6 +28,7 @@ require('./timeouts.js');
 require('./send.js');
 require('./retry.js');
 require('./relay.js');
+require('./relay_lazy.js');
 require('./relay-stats.js');
 require('./streaming.js');
 require('./streaming_bisect.js');
@@ -88,3 +89,7 @@ require('./v2/ping.js');
 require('./v2/error_response.js');
 require('./v2/args.js');
 require('./v2/lazy_frame.js');
+
+require('./hyperbahn-client/constructor.js');
+require('./hyperbahn-client/sub-channel.js');
+require('./hyperbahn-client/thrift-codec.js');

@@ -63,6 +63,7 @@ function TChannelRequest(options) {
     self.trackPending = self.options.trackPending || false;
 
     self.serviceName = options.serviceName || '';
+    self.callerName = options.headers && options.headers.cn || '';
     // so that as-foo can punch req.headers.X
     self.headers = self.options.headers;
 
@@ -154,7 +155,7 @@ TChannelRequest.prototype.send = function send(arg1, arg2, arg3, callback) {
         self.hookupCallback(callback);
     }
     self.start = self.channel.timers.now();
-    self.resendSanity = self.limit + 1;
+    self.resendSanity = self.limit;
 
     TChannelOutRequest.prototype.emitOutboundCallsSent.call(self);
 
@@ -221,7 +222,7 @@ TChannelRequest.prototype.onIdentified = function onIdentified(peer) {
     if (self.outReqs.length !== 1) {
         self.channel.outboundCallsRetriesStat.increment(1, {
             'target-service': outReq.serviceName,
-            'service': outReq.headers.cn,
+            'service': outReq.callerName,
             // TODO should always be buffer
             'target-endpoint': String(self.arg1),
             'retry-count': self.outReqs.length - 1
@@ -270,7 +271,7 @@ TChannelRequest.prototype.onSubreqResponse = function onSubreqResponse(res) {
 
 TChannelRequest.prototype.deferResend = function deferResend() {
     var self = this;
-    if (--self.resendSanity <= 0) {
+    if (--self.resendSanity < 0) {
         self.emitError(errors.RequestRetryLimitExceeded({
             limit: self.limit
         }));
@@ -319,7 +320,7 @@ TChannelRequest.prototype.checkTimeout = function checkTimeout(err, res) {
 TChannelRequest.prototype.shouldRetryError = function shouldRetryError(err) {
     var self = this;
 
-    if (self.outReqs.length >= self.limit) {
+    if (self.outReqs.length > self.limit) {
         return false;
     }
 

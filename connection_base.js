@@ -43,7 +43,6 @@ function TChannelConnectionBase(channel, direction, socketRemoteAddr) {
 
     self.draining = false;
     self.drainReason = '';
-    self.drainExempt = null;
 
     self.closing = false;
     self.closeError = null;
@@ -91,19 +90,11 @@ TChannelConnectionBase.prototype.setLazyHandling = function setLazyHandling() {
 };
 
 TChannelConnectionBase.prototype.drain =
-function drain(reason, exempt, callback) {
+function drain(reason, callback) {
     var self = this;
 
-    if (callback === undefined) {
-        callback = exempt;
-        exempt = null;
-    }
+    self._drain(reason);
 
-    self.draining = true;
-    self.drainReason = reason;
-    self.drainExempt = exempt || null;
-    self.ops.draining = true;
-    self.ops.drainExempt = self.drainExempt;
     if (callback) {
         if (self.ops.hasDrained()) {
             process.nextTick(callback);
@@ -111,6 +102,15 @@ function drain(reason, exempt, callback) {
             self.ops.drainEvent.on(callback);
         }
     }
+};
+
+TChannelConnectionBase.prototype._drain =
+function _drain(reason) {
+    var self = this;
+
+    self.draining = true;
+    self.drainReason = reason;
+    self.ops.draining = true;
 };
 
 // create a request
@@ -130,8 +130,9 @@ function connBaseRequest(options) {
 
     var req = self.buildOutRequest(options);
     if (self.draining && (
-            !self.drainExempt || !self.drainExempt(req)
-        )) {
+        !self.channel.drainExempt ||
+        !self.channel.drainExempt(req)
+    )) {
         req.drained = true;
         req.drainReason = self.drainReason;
     }
@@ -147,8 +148,9 @@ TChannelConnectionBase.prototype.handleCallRequest = function handleCallRequest(
     self.ops.addInReq(req);
 
     if (self.draining && (
-            !self.drainExempt || !self.drainExempt(req)
-        )) {
+        !self.channel.drainExempt ||
+        !self.channel.drainExempt(req)
+    )) {
         var res = self.buildResponse(req, {});
         res.sendError('Declined', 'connection draining: ' + self.drainReason);
         return;
@@ -196,7 +198,7 @@ TChannelConnectionBase.prototype.runHandler = function runHandler(req) {
         'counter',
         1,
         new stat.InboundCallsRecvdTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )

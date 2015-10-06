@@ -65,14 +65,8 @@ function TChannelPeer(channel, hostPort, options) {
         );
     }
 
-    self.preferConnectionDirection = self.options.preferConnectionDirection;
-    if (self.preferConnectionDirection === 'out') {
-        self.setScoreStrategy(PreferOutgoing);
-    } else if (self.preferConnectionDirection === 'in') {
-        self.setScoreStrategy(PreferIncoming);
-    } else {
-        self.setScoreStrategy(NoPreference);
-    }
+    var direction = self.options.preferConnectionDirection || 'any';
+    self.setPreferConnectionDirection(direction);
 
     function onReport() {
         if (!self.hostPort) {
@@ -94,6 +88,33 @@ function TChannelPeer(channel, hostPort, options) {
 }
 
 inherits(TChannelPeer, EventEmitter);
+
+TChannelPeer.prototype.extendLogInfo =
+function extendLogInfo(info) {
+    var self = this;
+
+    info.hostPort = self.hostPort;
+
+    return info;
+};
+
+TChannelPeer.prototype.setPreferConnectionDirection = function setPreferConnectionDirection(direction) {
+    var self = this;
+    if (self.preferConnectionDirection === direction) {
+        return;
+    }
+
+    self.preferConnectionDirection = direction;
+    if (self.preferConnectionDirection === 'out') {
+        self.setScoreStrategy(PreferOutgoing);
+    } else if (self.preferConnectionDirection === 'in') {
+        self.setScoreStrategy(PreferIncoming);
+    } else {
+        self.setScoreStrategy(NoPreference);
+    }
+
+    self.invalidateScore();
+};
 
 TChannelPeer.prototype.setScoreStrategy = function setScoreStrategy(ScoreStrategy) {
     var self = this;
@@ -143,9 +164,9 @@ TChannelPeer.prototype.close = function close(callback) {
 
     var counter = self.connections.length;
     if (counter) {
-        self.connections.forEach(function eachConn(conn) {
-            conn.close(onClose);
-        });
+        for (var i = counter - 1; i >= 0; i--) {
+            self.connections[i].close(onClose);
+        }
     } else {
         callback(null);
     }
@@ -361,7 +382,7 @@ TChannelPeer.prototype.removeConnection = function removeConnection(conn) {
 
     self._maybeInvalidateScore();
 
-    self.removeConnectionEvent.emit(self);
+    self.removeConnectionEvent.emit(self, conn);
     return ret;
 };
 
@@ -383,7 +404,7 @@ TChannelPeer.prototype.makeOutConnection = function makeOutConnection(socket) {
     var conn = new TChannelConnection(chan, socket, 'out', self.hostPort);
 
     if (chan.draining) {
-        conn.drain(chan.drainReason, chan.drainExempt, null);
+        conn.drain(chan.drainReason, null);
     }
 
     self.allocConnectionEvent.emit(self, conn);
@@ -428,6 +449,7 @@ TChannelPeer.prototype.countPending = function countPending() {
         var connPending = self.connections[index].ops.getPending();
 
         pending += connPending.out;
+        pending += connPending.errors;
     }
 
     return pending;

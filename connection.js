@@ -97,11 +97,10 @@ TChannelConnection.prototype.setLazyHandling = function setLazyHandling(enabled)
     // moves wholly into a `self.handler.setLazyHandling(bool)`
     if (enabled && self.mach.chunkRW !== v2.LazyFrame.RW) {
         self.mach.chunkRW = v2.LazyFrame.RW;
-        self.handler.useLazyFrames(enabled);
     } else if (!enabled && self.mach.chunkRW !== v2.Frame.RW) {
         self.mach.chunkRW = v2.Frame.RW;
-        self.handler.useLazyFrames(enabled);
     }
+    self.handler.useLazyFrames(enabled);
 };
 
 TChannelConnection.prototype.setupSocket = function setupSocket() {
@@ -162,10 +161,11 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
 
     self.handler.writeErrorEvent.on(onWriteError);
     self.handler.errorEvent.on(onHandlerError);
+    self.handler.errorFrameEvent.on(onErrorFrame);
     self.handler.callIncomingRequestEvent.on(onCallRequest);
     self.handler.callIncomingResponseEvent.on(onCallResponse);
     self.handler.pingIncomingResponseEvent.on(onPingResponse);
-    self.handler.callIncomingErrorEvent.on(onCallError);
+    self.handler.callIncomingErrorFrameEvent.on(onCallErrorFrame);
 
     // TODO: restore dumping from old:
     // var stream = self.socket;
@@ -195,6 +195,10 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.onHandlerError(err);
     }
 
+    function onErrorFrame(errFrame) {
+        self.onErrorFrame(errFrame);
+    }
+
     function handleReadFrame(frame) {
         self.handleReadFrame(frame);
     }
@@ -211,8 +215,8 @@ TChannelConnection.prototype.setupHandler = function setupHandler() {
         self.handlePingResponse(res);
     }
 
-    function onCallError(err) {
-        self.onCallError(err);
+    function onCallErrorFrame(errFrame) {
+        self.onCallErrorFrame(errFrame);
     }
 };
 
@@ -237,9 +241,9 @@ function sendProtocolError(type, err) {
             'peer-host-port': self.socketRemoteAddr
         });
 
-        self.handler.sendErrorFrame({
-            id: protocolError.frameId || v2.Frame.NullId
-        }, 'ProtocolError', protocolError.message);
+        self.handler.sendErrorFrame(
+            protocolError.frameId || v2.Frame.NullId, null,
+            'ProtocolError', protocolError.message);
 
         self.resetAll(protocolError);
     } else if (type === 'write') {
@@ -260,12 +264,62 @@ TChannelConnection.prototype.onWriteError = function onWriteError(err) {
     self.sendProtocolError('write', err);
 };
 
-TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
+TChannelConnection.prototype.onErrorFrame = function onErrorFrame(errFrame) {
     var self = this;
 
-    if (err) {
-        self.resetAll(err);
+    // TODO: too coupled to v2
+
+    switch (errFrame.body.code) {
+
+    case v2.ErrorResponse.Codes.ProtocolError:
+        var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+        self.resetAll(codeErrorType({
+            originalId: errFrame.id,
+            message: String(errFrame.body.message)
+        }));
+        return;
+
+    case v2.ErrorResponse.Codes.Declined:
+        var match = /^draining:\s*(.+)$/.exec(errFrame.body.message);
+        if (match) {
+            self.draining = true;
+            self.drainReason = 'remote draining: ' + match[1];
+            // TODO:
+            // - info log?
+            // - invaliadet peer score?
+            return;
+        }
+        logUnhandled(v2.ErrorResponse.CodeNames[errFrame.body.code]);
+        break;
+
+    case v2.ErrorResponse.Codes.BadRequest:
+    case v2.ErrorResponse.Codes.Busy:
+    case v2.ErrorResponse.Codes.Cancelled:
+    case v2.ErrorResponse.Codes.NetworkError:
+    case v2.ErrorResponse.Codes.Timeout:
+    case v2.ErrorResponse.Codes.UnexpectedError:
+    case v2.ErrorResponse.Codes.Unhealthy:
+        logUnhandled(v2.ErrorResponse.CodeNames[errFrame.body.code]);
+        return;
+
+    default:
+        logUnhandled('unknown');
     }
+
+    function logUnhandled(codeName) {
+        self.logger.warn('unhandled error frame', self.extendLogInfo({
+            id: errFrame.id,
+            errorCode: errFrame.body.code,
+            errorCodeName: codeName,
+            errorTracing: errFrame.body.tracing,
+            errorMessage: errFrame.body.message
+        }));
+    }
+};
+
+TChannelConnection.prototype.onHandlerError = function onHandlerError(err) {
+    var self = this;
+    self.resetAll(err);
 };
 
 TChannelConnection.prototype.handlePingResponse = function handlePingResponse(resFrame) {
@@ -331,21 +385,27 @@ TChannelConnection.prototype.ping = function ping() {
     return self.handler.sendPingRequest();
 };
 
-TChannelConnection.prototype.onCallError = function onCallError(err) {
+TChannelConnection.prototype.onCallErrorFrame =
+function onCallErrorFrame(errFrame) {
     var self = this;
 
-    var req = self.ops.getOutReq(err.originalId);
+    var id = errFrame.id;
+    var req = self.ops.getOutReq(id);
 
-    if (req && req.res) {
-        req.res.errorEvent.emit(req.res, err);
-    } else {
-        // Only popOutReq if there is no call response object yet
-        req = self.ops.popOutReq(err.originalId, err);
-        if (!req) {
-            return;
+    var codeErrorType = v2.ErrorResponse.CodeErrors[errFrame.body.code];
+    var err = codeErrorType({
+        originalId: id,
+        message: String(errFrame.body.message)
+    });
+
+    if (req) {
+        if (req.res) {
+            req.res.errorEvent.emit(req.res, err);
+        } else {
+            // Only popOutReq if there is no call response object yet
+            req = self.ops.popOutReq(id, err);
+            req.emitError(err);
         }
-
-        req.emitError(err);
     }
 };
 
@@ -608,15 +668,30 @@ TChannelConnection.prototype.sendLazyErrorFrame =
 function sendLazyErrorFrame(reqFrame, codeString, message) {
     var self = this;
 
-    var fakeR = {
-        id: reqFrame.id,
-        tracing: null
-    };
     var res = reqFrame.bodyRW.lazy.readService(reqFrame);
-    if (!res.err) {
-        fakeR.tracing = res.value;
+    self.handler.sendErrorFrame(
+        reqFrame.id, res.err ? null : res.value,
+        codeString, message);
+};
+
+TChannelConnection.prototype._drain =
+function _drain(reason, exempt) {
+    var self = this;
+
+    TChannelConnectionBase.prototype._drain.call(self, reason, exempt);
+
+    if (self.remoteName) {
+        sendDrainingFrame();
+    } else {
+        self.identifiedEvent.on(sendDrainingFrame);
     }
-    self.handler.sendErrorFrame(fakeR, codeString, message);
+
+    function sendDrainingFrame() {
+        self.handler.sendErrorFrame(
+            v2.Frame.NullId, null,
+            'Declined',
+            'draining: ' + self.drainReason);
+    }
 };
 
 module.exports = TChannelConnection;

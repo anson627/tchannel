@@ -51,7 +51,8 @@ function TChannelV2Handler(options) {
     var self = this;
     EventEmitter.call(self);
     self.errorEvent = self.defineEvent('error');
-    self.callIncomingErrorEvent = self.defineEvent('callIncomingError');
+    self.errorFrameEvent = self.defineEvent('errorFrame');
+    self.callIncomingErrorFrameEvent = self.defineEvent('callIncomingErrorFrame');
     self.callIncomingRequestEvent = self.defineEvent('callIncomingRequest');
     self.callIncomingResponseEvent = self.defineEvent('callIncomingResponse');
     self.cancelEvent = self.defineEvent('cancel');
@@ -82,6 +83,17 @@ function TChannelV2Handler(options) {
 
     self.requireAs = self.options.requireAs === false ? false : true;
     self.requireCn = self.options.requireCn === false ? false : true;
+
+    self.boundOnReqError = onReqError;
+    self.boundOnResError = onResError;
+
+    function onReqError(err, req) {
+        self.onReqError(err, req);
+    }
+
+    function onResError(err, res) {
+        self.onResError(err, res);
+    }
 }
 
 util.inherits(TChannelV2Handler, EventEmitter);
@@ -252,7 +264,7 @@ TChannelV2Handler.prototype.handleCallRequest = function handleCallRequest(reqFr
         'counter',
         reqFrame.size,
         new stat.InboundRequestSizeTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )
@@ -383,7 +395,7 @@ TChannelV2Handler.prototype.handleCallResponse = function handleCallResponse(res
         'counter',
         resFrame.size,
         new stat.InboundResponseSizeTags(
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
@@ -431,7 +443,7 @@ TChannelV2Handler.prototype.handleCallRequestCont = function handleCallRequestCo
         'counter',
         reqFrame.size,
         new stat.InboundRequestSizeTags(
-            req.headers.cn,
+            req.callerName,
             req.serviceName,
             req.endpoint
         )
@@ -462,7 +474,7 @@ TChannelV2Handler.prototype.handleCallResponseCont = function handleCallResponse
         'counter',
         resFrame.size,
         new stat.InboundResponseSizeTags(
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.serviceName : '',
             req ? req.endpoint : ''
         )
@@ -492,23 +504,15 @@ TChannelV2Handler.prototype.handlePingResponse = function handlePingResponse(pin
 TChannelV2Handler.prototype.handleError = function handleError(errFrame, callback) {
     var self = this;
 
-    var id = errFrame.id;
-    var code = errFrame.body.code;
-    var message = String(errFrame.body.message);
-    var err = v2.ErrorResponse.CodeErrors[code]({
-        originalId: id,
-        message: message
-    });
-
-    delete self.streamingReq[id];
-    delete self.streamingRes[id];
-
-    if (id === v2.Frame.NullId) {
-        // fatal error not associated with a prior frame
-        self.errorEvent.emit(self, err);
-    } else {
-        self.callIncomingErrorEvent.emit(self, err);
+    if (errFrame.id === v2.Frame.NullId) {
+        // error frame not associated with a prior frame
+        self.errorFrameEvent.emit(self, errFrame);
+        return;
     }
+
+    delete self.streamingReq[errFrame.id];
+    delete self.streamingRes[errFrame.id];
+    self.callIncomingErrorFrameEvent.emit(self, errFrame);
 };
 
 TChannelV2Handler.prototype._checkCallFrame = function _checkCallFrame(r, frame) {
@@ -619,7 +623,7 @@ function sendCallRequestFrame(req, flags, args) {
         req.id, reqBody, null,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 
@@ -654,7 +658,7 @@ function verifyCallRequestFrame(req, args) {
         } else {
             self.logger.error('Expected "as" header to be set for request', {
                 arg1: req.endpoint,
-                callerName: req.headers && req.headers.cn,
+                callerName: req.callerName,
                 remoteName: self.remoteName,
                 serviceName: req.serviceName,
                 socketRemoteAddr: self.connection.socketRemoteAddr
@@ -662,7 +666,7 @@ function verifyCallRequestFrame(req, args) {
         }
     }
 
-    if (!req.headers || !req.headers.cn) {
+    if (!req.callerName) {
         if (self.requireCn) {
             return errors.OutCnHeaderRequired();
         } else {
@@ -699,7 +703,7 @@ function sendCallResponseFrame(res, flags, args) {
         res.id, resBody, null,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 };
@@ -736,7 +740,7 @@ TChannelV2Handler.prototype.sendCallRequestContFrame = function sendCallRequestC
         req.id, reqBody, req.checksum,
         'tchannel.outbound.request.size', new stat.OutboundRequestSizeTags(
             req ? req.serviceName : '',
-            req ? req.headers.cn : '',
+            req ? req.callerName : '',
             req ? req.endpoint : ''
         ));
 };
@@ -754,7 +758,7 @@ TChannelV2Handler.prototype.sendCallResponseContFrame = function sendCallRespons
         res.id, resBody, res.checksum,
         'tchannel.outbound.response.size', new stat.OutboundResponseSizeTags(
             req.serviceName,
-            req.headers.cn,
+            req.callerName,
             req.endpoint
         ));
 };
@@ -803,7 +807,7 @@ TChannelV2Handler.prototype.sendPingReponse = function sendPingReponse(res) {
     self.pushFrame(resFrame);
 };
 
-TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeString, message) {
+TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(id, tracing, codeString, message) {
     var self = this;
     var code = v2.ErrorResponse.Codes[codeString];
     if (code === undefined) {
@@ -813,8 +817,8 @@ TChannelV2Handler.prototype.sendErrorFrame = function sendErrorFrame(r, codeStri
         code = v2.ErrorResponse.Codes.UnexpectedError;
         message = 'UNKNOWN CODE(' + codeString + '): ' + message;
     }
-    var errBody = new v2.ErrorResponse(code, r.tracing, message);
-    var errFrame = new v2.Frame(r.id, errBody);
+    var errBody = new v2.ErrorResponse(code, tracing, message);
+    var errFrame = new v2.Frame(id, errBody);
     self.pushFrame(errFrame);
 };
 
@@ -885,11 +889,7 @@ TChannelV2Handler.prototype.buildInRequest = function buildInRequest(reqFrame) {
         req = new InRequest(reqFrame.id, opts);
     }
 
-    req.errorEvent.on(onReqError);
-
-    function onReqError(err) {
-        self.onReqError(err, req);
-    }
+    req.errorEvent.on(self.boundOnReqError);
 
     return req;
 };
@@ -919,25 +919,6 @@ TChannelV2Handler.prototype.onResError = function onResError(err, res) {
     req.errorEvent.emit(req, err);
 };
 
-/*jshint maxparams:10*/
-function InRequestOptions(
-    channel, timeout, tracing, serviceName, headers, checksum,
-    retryFlags, connection, hostPort, tracer
-) {
-    var self = this;
-
-    self.channel = channel;
-    self.timeout = timeout;
-    self.tracing = tracing;
-    self.serviceName = serviceName;
-    self.headers = headers;
-    self.checksum = checksum;
-    self.retryFlags = retryFlags;
-    self.connection = connection;
-    self.hostPort = hostPort;
-    self.tracer = tracer;
-}
-
 TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame) {
     var self = this;
 
@@ -958,11 +939,26 @@ TChannelV2Handler.prototype.buildInResponse = function buildInResponse(resFrame)
         res = new InResponse(resFrame.id, opts);
     }
 
-    res.errorEvent.on(onResError);
-
-    function onResError(err) {
-        self.onResError(err, res);
-    }
+    res.errorEvent.on(self.boundOnResError);
 
     return res;
 };
+
+/*jshint maxparams:10*/
+function InRequestOptions(
+    channel, timeout, tracing, serviceName, headers, checksum,
+    retryFlags, connection, hostPort, tracer
+) {
+    var self = this;
+
+    self.channel = channel;
+    self.timeout = timeout;
+    self.tracing = tracing;
+    self.serviceName = serviceName;
+    self.headers = headers;
+    self.checksum = checksum;
+    self.retryFlags = retryFlags;
+    self.connection = connection;
+    self.hostPort = hostPort;
+    self.tracer = tracer;
+}

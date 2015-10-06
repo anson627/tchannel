@@ -2,6 +2,10 @@
 
 The tchannel documentation is spread out in multiple parts
 
+## Read the Node GUIDE
+
+Check out our [GUIDE](./GUIDE.md)
+
 ## Core topics
 
 The following documents are core to tchannel
@@ -10,6 +14,7 @@ The following documents are core to tchannel
  - [sub-channels](./sub-channels.md)
  - [hyperbahn](./hyperbahn.md)
  - [as-thrift](./as-thrift.md)
+
 
 ## Extra topics
 
@@ -21,3 +26,4 @@ that are available.
  - [peer-to-peer](./peer-to-peer.md)
  - [statsd](./statsd.md)
  - [streaming](./streaming.md)
+

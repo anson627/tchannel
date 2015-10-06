@@ -818,8 +818,34 @@ module.exports.toHTTPCode = function toHTTPCode(codeName) {
         case 'NetworkError':
             return new HTTPInfo(500, 'TChannel Network Error');
 
+        case 'UnexpectedError':
+            return new HTTPInfo(500, 'TChannel Unexpected Error');
+
         default:
             return new HTTPInfo(500, 'Internal Server Error');
+    }
+};
+
+module.exports.isFatal = function isFatal(err, codeName) {
+    if (!codeName) {
+        codeName = module.exports.classify(err);
+    }
+    switch (codeName) {
+        case 'Busy':
+        case 'Cancelled':
+        case 'Declined':
+        case 'NetworkError':
+        case 'Timeout':
+        case 'Unhealthy':
+            return false;
+
+        case 'BadRequest':
+        case 'ProtocolError':
+        case 'UnexpectedError':
+            return true;
+
+        default:
+            return true;
     }
 };
 
@@ -836,6 +862,7 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
         case 'Cancelled':
         case 'Declined':
         case 'NetworkError':
+        case 'Unhealthy':
             return 'warn';
 
         case 'BadRequest':
@@ -844,5 +871,30 @@ module.exports.logLevel = function errorLogLevel(err, codeName) {
 
         default:
             return 'error';
+    }
+};
+
+/*  Whether we should increase peer.pending on an error frame.
+
+    On Busy & Declined we increase the pending count for a peer
+    to allow peer selection to favor less loaded peers.
+*/
+module.exports.isPendingError = function isPendingError(codeName) {
+    switch (codeName) {
+        case 'Busy':
+        case 'Declined':
+        case 'Unhealthy':
+            return true;
+
+        case 'BadRequest':
+        case 'Cancelled':
+        case 'NetworkError':
+        case 'ProtocolError':
+        case 'Timeout':
+        case 'UnexpectedError':
+            return false;
+
+        default:
+            return false;
     }
 };
